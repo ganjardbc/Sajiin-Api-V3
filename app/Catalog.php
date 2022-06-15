@@ -22,13 +22,10 @@ class Catalog extends Model
             'products.is_available',
             'products.status',
             'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name',
             'shops.name as shop_name'
         )
         ->join('products', 'products.id', '=', 'catalogs.product_id')
         ->join('shops', 'shops.id', '=', 'catalogs.shop_id')
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->limit($limit)
         ->offset($offset)
         ->get();
@@ -48,14 +45,11 @@ class Catalog extends Model
             'products.is_available',
             'products.status',
             'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name',
             'shops.id as shop_id',
             'shops.name as shop_name'
         )
         ->join('products', 'products.id', '=', 'catalogs.product_id')
         ->join('shops', 'shops.id', '=', 'catalogs.shop_id')
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->where(['catalogs.shop_id' => $id])
         ->limit($limit)
         ->offset($offset)

@@ -39,14 +39,8 @@ class PositionController extends Controller
             $limit = $req['limit'];
             $offset = $req['offset'];
             $stt = $status ? ['status' => $status] : [];
-            $newStt = array_merge($stt, ['user_id' => Auth()->user()->id]);
-            // $data = Position::where($stt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-
-            if (Auth()->user()->role_id == 1) {
-                $data = Position::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            } else {
-                $data = Position::where($stt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            }
+            $newStt = array_merge($stt, ['shop_id' => $req['shop_id']]);
+            $data = Position::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
             
             if ($data) 
             {

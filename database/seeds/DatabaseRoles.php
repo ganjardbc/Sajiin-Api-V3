@@ -15,8 +15,8 @@ class DatabaseRoles extends Seeder
         $data = [
             [
                 'id' => '1',
-                'role_id' => 'ROLE0001',
-                'role_name' => 'admin',
+                'role_id' => 'RL-1626330482781',
+                'role_name' => 'waiter',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
                 "created_at" => '2020-06-28 19:08:45',
@@ -24,8 +24,8 @@ class DatabaseRoles extends Seeder
             ],
             [
                 'id' => '2',
-                'role_id' => 'ROLE0002',
-                'role_name' => 'customer',
+                'role_id' => 'RL-1626330482782',
+                'role_name' => 'cashier',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
                 "created_at" => '2020-06-28 19:08:45',
@@ -33,8 +33,8 @@ class DatabaseRoles extends Seeder
             ],
             [
                 'id' => '3',
-                'role_id' => 'ROLE0003',
-                'role_name' => 'partner',
+                'role_id' => 'RL-1626330482783',
+                'role_name' => 'kitchen',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
                 "created_at" => '2020-06-28 19:08:45',
@@ -42,7 +42,7 @@ class DatabaseRoles extends Seeder
             ],
             [
                 'id' => '4',
-                'role_id' => 'ROLE0004',
+                'role_id' => 'RL-1626330482784',
                 'role_name' => 'owner',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',

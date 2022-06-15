@@ -146,7 +146,7 @@ class OrderController extends Controller
 
                 for ($i=0; $i < count($dump); $i++) { 
                     $order = $dump[$i];
-                    $orderItems = OrderItem::GetByOrderId($dump[$i]['id']); //where(['order_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
+                    $orderItems = OrderItem::GetByOrderId($dump[$i]['id']);
                     $table = Table::where(['id' => $dump[$i]['table_id']])->first();
                     $customer = Customer::where(['id' => $dump[$i]['customer_id']])->first();
                     $address = Address::where(['id' => $dump[$i]['address_id']])->first();

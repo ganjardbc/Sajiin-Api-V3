@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Validator;
 use App\Product;
 use App\ProductDetail;
 use App\ProductImage;
-use App\Category;
 use App\ProductToping;
 use App\Shop;
 
@@ -67,13 +66,11 @@ class ProductController extends Controller
                     $detailProduct = ProductDetail::where(array_merge(['product_id' => $dump[$i]['id']], $stt))->orderBy('id', 'desc')->get();
                     $detailImage = ProductImage::where(['product_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
                     $detailToping = ProductToping::GetAll(1000, 0, $dump[$i]['id'], $stt);
-                    $categories = Category::get();
                     $payload = [
                         'product' => $product,
                         'details' => $detailProduct,
                         'images' => $detailImage,
-                        'topings' => $detailToping,
-                        'categories' => $categories
+                        'topings' => $detailToping
                     ];
                     array_push($newPayload, $payload);
                 }
@@ -129,14 +126,12 @@ class ProductController extends Controller
                 $detailProduct = ProductDetail::where(['product_id' => $dump['id']])->orderBy('id', 'desc')->get();
                 $detailImage = ProductImage::where(['product_id' => $dump['id']])->orderBy('id', 'desc')->get();
                 $detailToping = ProductToping::GetAll(1000, 0, $dump['id'], []);
-                $categories = Category::get();
 
                 $newPayload = [
                     'product' => $product,
                     'details' => $detailProduct,
                     'images' => $detailImage,
-                    'topings' => $detailToping,
-                    'categories' => $categories
+                    'topings' => $detailToping
                 ];
 
                 $response = [
@@ -169,8 +164,7 @@ class ProductController extends Controller
             'note' => 'max:255',
             'is_pinned' => 'required|boolean',
             'is_available' => 'required|boolean',
-            'status' => 'required|string',
-            'category_id' => 'required|integer'
+            'status' => 'required|string'
         ]);
 
         $response = [];
@@ -195,7 +189,6 @@ class ProductController extends Controller
                 'is_pinned' => $req['is_pinned'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
-                'category_id' => $req['category_id'],
                 'user_id' => Auth()->user()->id,
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
@@ -235,8 +228,7 @@ class ProductController extends Controller
             'note' => 'max:255',
             'is_pinned' => 'required|boolean',
             'is_available' => 'required|boolean',
-            'status' => 'required|string',
-            'category_id' => 'required|integer'
+            'status' => 'required|string'
         ]);
 
         $response = [];
@@ -260,7 +252,6 @@ class ProductController extends Controller
                 'is_pinned' => $req['is_pinned'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
-                'category_id' => $req['category_id'],
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
             ];

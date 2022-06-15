@@ -9,6 +9,7 @@ use App\Table;
 use App\Shift;
 use App\Customer;
 use App\Catalog;
+use App\Position;
 use App\Employee;
 use App\Cart;
 use App\WisheList;
@@ -166,13 +167,15 @@ class ShopController extends Controller
                     $shifts = Shift::where(['shop_id' => $shop['id']])->get();
                     $customers = Customer::where(['shop_id' => $shop['id']])->get();
                     $employees = Employee::where(['shop_id' => $shop['id']])->get();
+                    $positions = Position::where(['shop_id' => $shop['id']])->get();
                     $payload = [
                         'shop' => $shop,
                         'catalogs' => $catalogs,
                         'tables' => $tables,
                         'shifts' => $shifts,
                         'customers' => $customers,
-                        'employees' => $employees
+                        'employees' => $employees,
+                        'positions' => $positions
                     ];
                     array_push($newPayload, $payload);
                 }
@@ -226,12 +229,16 @@ class ShopController extends Controller
                 $tables = Table::where(['shop_id' => $data['id']])->get();
                 $shifts = Shift::where(['shop_id' => $data['id']])->get();
                 $customers = Customer::where(['shop_id' => $data['id']])->get();
+                $employees = Employee::where(['shop_id' => $data['id']])->get();
+                $positions = Position::where(['shop_id' => $data['id']])->get();
                 $newPayload = [
                     'shop' => $data,
                     'catalogs' => $catalogs,
                     'tables' => $tables,
                     'shifts' => $shifts,
-                    'customers' => $customers
+                    'customers' => $customers,
+                    'employees' => $employees,
+                    'positions' => $positions
                 ];
 
                 $response = [

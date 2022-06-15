@@ -15,26 +15,26 @@ class DatabaseShifts extends Seeder
         $data = [
             [
                 'id' => '1',
-                'shift_id' => 'SF0001',
+                'shift_id' => 'SF-1622798516521',
                 'title' => 'Lorem ipsum',
                 'start_time' => '07:00',
                 'end_time' => '15:00',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
-                'shop_id' => '1',
+                'store_id' => '1',
                 'created_by' => '1',
                 "created_at" => '2020-06-28 19:08:45',
                 "updated_at" => '2020-06-28 19:08:45'
             ],
             [
                 'id' => '2',
-                'shift_id' => 'SF0002',
+                'shift_id' => 'SF-1622798516522',
                 'title' => 'Lorem ipsum',
                 'start_time' => '15:00',
                 'end_time' => '22:00',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
-                'shop_id' => '1',
+                'store_id' => '1',
                 'created_by' => '1',
                 "created_at" => '2020-06-28 19:08:45',
                 "updated_at" => '2020-06-28 19:08:45'

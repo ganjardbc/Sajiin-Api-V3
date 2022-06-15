@@ -25,10 +25,8 @@ class Order extends Model
             'orders.created_by',
             'orders.created_at',
             'orders.updated_by',
-            'orders.updated_at',
-            // 'partner_configurations.name as pc_name'
+            'orders.updated_at'
         )
-        // ->join('partner_configurations', 'partner_configurations.id', '=', 'orders.config_id')
         ->limit($limit)
         ->offset($offset)
         ->get();
@@ -53,10 +51,8 @@ class Order extends Model
             'orders.created_by',
             'orders.created_at',
             'orders.updated_by',
-            'orders.updated_at',
-            // 'partner_configurations.name as pc_name'
+            'orders.updated_at'
         )
-        // ->join('partner_configurations', 'partner_configurations.id', '=', 'orders.config_id')
         ->where(['orders.created_by' => $id])
         ->limit($limit)
         ->offset($offset)
