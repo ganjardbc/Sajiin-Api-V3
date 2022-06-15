@@ -104,60 +104,6 @@ class AuthController extends Controller
         return response()->json($response, 200);
     }
 
-    public function register(Request $req)
-    {
-        $validator = Validator::make($req->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6'
-        ]);
-
-        $response = [];
-
-        if ($validator->fails()) 
-        {
-            $response = [
-                'message' => $validator->errors(),
-                'status' => 'invalide',
-                'code' => '201',
-                'data' => []
-            ];
-        }
-        else 
-        {
-            $data = [
-                'name' => $req['name'],
-                'email' => $req['email'],
-                'password' => Hash::make($req['password']),
-                'username' => explode('@', $req['email'])[0],
-                'enabled' => false,
-                'role_id' => '2'
-            ];
-
-            $rest = User::insert($data);
-            if ($rest) 
-            {
-                $response = [
-                    'message' => 'register success',
-                    'status' => 'ok',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-            else 
-            {
-                $response = [
-                    'message' => 'register failed',
-                    'status' => 'unauthorized',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-        }
-     
-        return response()->json($response, 200);
-    }
-
     public function logout(Request $req)
     {
         $user = $req->user();

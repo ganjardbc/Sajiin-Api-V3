@@ -19,12 +19,9 @@ class CreatePositionsTable extends Migration
             $table->string('title');
             $table->string('description')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('inactive');
-            $table->unsignedBigInteger('merchant_id');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
-
-            $table->foreign('merchant_id')->references('id')->on('merchants');
         });
     }
 

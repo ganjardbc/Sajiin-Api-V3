@@ -52,7 +52,7 @@ class UserController extends Controller
                     $user = $dump[$i];
                     $permission = RolePermission::GetAllByID(1000, 0, $user['role_id']);
                     $role = Role::where(['id' => $user['role_id']])->first();
-                    $employee = Employee::where(['id' => $user['owner_id']])->first();
+                    $employee = Employee::where(['id' => $user['employee_id']])->first();
                     $payload = $user;
                     $payload['role'] = $role;
                     $payload['permissions'] = $permission;
@@ -84,7 +84,7 @@ class UserController extends Controller
     public function getByID(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'id' => 'required|string|min:0|max:6',
+            'user_id' => 'required|string|min:0|max:17',
         ]);
 
         $response = [];
@@ -100,16 +100,18 @@ class UserController extends Controller
         } 
         else 
         {
-            $id = $req['id'];
-            $data = User::where(['id' => $id])->first();
+            $user_id = $req['user_id'];
+            $data = User::where(['user_id' => $user_id])->first();
             
             if ($data) 
             {
                 $permission = RolePermission::GetAllByID(1000, 0, $data['role_id']);
                 $role = Role::where(['id' => $data['role_id']])->first();
+                $employee = Employee::where(['id' => $data['employee_id']])->first();
                 $payload = $data;
                 $payload['role'] = $role;
                 $payload['permissions'] = $permission;
+                $payload['employee'] = $employee;
 
                 $response = [
                     'message' => 'proceed success',
@@ -265,15 +267,83 @@ class UserController extends Controller
         return response()->json($response, 200);
     }
 
+    public function changePassword(Request $req)
+    {
+        $validator = Validator::make($req->all(), [
+            'user_id' => 'required|string|min:0|max:17',
+            'old_password' => 'required|string',
+            'new_password' => 'required|string'
+        ]);
+
+        $response = [];
+
+        if ($validator->fails()) 
+        {
+            $response = [
+                'message' => $validator->errors(),
+                'status' => 'invalide',
+                'code' => '201',
+                'data' => []
+            ];
+        } 
+        else 
+        {
+            $user = User::where(['user_id'=> $req['user_id']])->first();
+            if (Hash::check($req['old_password'], $user->password)) 
+            {
+                $payload = [
+                    'password' => Hash::make($req['new_password']),
+                    'updated_by' => Auth()->user()->id,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+
+                $data = User::where(['user_id' => $req['user_id']])->update($payload);
+
+                if ($data)
+                {
+                    $response = [
+                        'message' => 'proceed success',
+                        'status' => 'ok',
+                        'code' => '201',
+                        'data' => []
+                    ];
+                }
+                else 
+                {
+                    $response = [
+                        'message' => 'failed to save',
+                        'status' => 'failed',
+                        'code' => '201',
+                        'data' => []
+                    ];
+                }
+            }
+            else 
+            {
+                $response = [
+                    'message' => 'check back your old password',
+                    'status' => 'password-invalid',
+                    'code' => '201',
+                    'data' => []
+                ];
+            }
+        }
+
+        return response()->json($response, 200);
+    }
+
     public function post(Request $req)
     {
         $validator = Validator::make($req->all(), [
+            'user_id' => 'required|string|min:0|max:17|unique:users',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'status' => 'required|string',
             'enabled' => 'required|boolean',
-            'role_id' => 'required|integer'
+            'role_id' => 'required|integer',
+            'employee_id' => 'required|integer',
+            'merchant_id' => 'required|integer',
         ]);
 
         $response = [];
@@ -290,6 +360,7 @@ class UserController extends Controller
         else 
         {
             $payload = [
+                'user_id' => $req['user_id'],
                 'name' => $req['name'],
                 'email' => $req['email'],
                 'password' => Hash::make($req['password']),
@@ -298,7 +369,8 @@ class UserController extends Controller
                 'status' => $req['status'],
                 'enabled' => $req['enabled'],
                 'role_id' => $req['role_id'],
-                'owner_id' => $req['owner_id']
+                'employee_id' => $req['employee_id'],
+                'merchant_id' => $req['merchant_id']
             ];
 
             $data = User::insert($payload);
@@ -329,11 +401,13 @@ class UserController extends Controller
     public function update(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'id' => 'required|integer',
+            'user_id' => 'required|string|min:0|max:17',
             'name' => 'required|string|max:255',
             'status' => 'required|string',
             'enabled' => 'required|boolean',
-            'role_id' => 'required|integer'
+            'role_id' => 'required|integer',
+            'employee_id' => 'required|integer',
+            'merchant_id' => 'required|integer',
         ]);
 
         $response = [];
@@ -355,23 +429,21 @@ class UserController extends Controller
                 'status' => $req['status'],
                 'enabled' => $req['enabled'],
                 'role_id' => $req['role_id'],
+                'employee_id' => $req['employee_id'],
+                'merchant_id' => $req['merchant_id']
             ];
 
-            if ($req['owner_id']) {
-                $payload['owner_id'] = $req['owner_id'];
-            }
-
-            $data = User::where(['id' => $req['id']])->update($payload);
+            $data = User::where(['user_id' => $req['user_id']])->update($payload);
 
             if ($data)
             {
-                $usr = User::where(['id' => $req['id']])->first();
+                $user = User::where(['user_id' => $req['user_id']])->first();
 
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => User::GetUserWithEmail($usr['email'])
+                    'data' => User::GetUserWithEmail($user['email'])
                 ];
             }
             else 
@@ -391,7 +463,7 @@ class UserController extends Controller
     public function delete(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'id' => 'required|integer|min:0|max:8',
+            'user_id' => 'required|string|min:0|max:17',
         ]);
 
         $response = [];
@@ -407,7 +479,7 @@ class UserController extends Controller
         } 
         else 
         {
-            $data = User::where(['id' => $req['id']])->delete();
+            $data = User::where(['user_id' => $req['user_id']])->delete();
 
             if ($data)
             {

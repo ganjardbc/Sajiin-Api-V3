@@ -15,10 +15,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('auth:sanctum')->group(function () {
-    // user
-    Route::get('me', 'AuthController@me');
-    Route::post('logout', 'AuthController@logout');
-
     // admin
     Route::prefix('admin')->group(function () {
         // auth
@@ -83,11 +79,27 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'MerchantController@update');
         Route::delete('delete', 'MerchantController@delete');
     });
+
+    // user
+    Route::prefix('user')->group(function () {
+        // auth
+        Route::get('me', 'AuthController@me');
+        Route::post('logout', 'AuthController@logout');
+
+        // crud
+        Route::get('getAll', 'UserController@getAll');
+        Route::get('getByID', 'UserController@getByID');
+        Route::post('uploadImage', 'UserController@uploadImage');
+        Route::post('removeImage', 'UserController@removeImage');
+        Route::post('changePassword', 'UserController@changePassword');
+        Route::post('post', 'UserController@post');
+        Route::put('update', 'UserController@update');
+        Route::delete('delete', 'UserController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {
     Route::post('login', 'AuthController@login');
-    Route::post('register', 'AuthController@register');
 });
 
 Route::prefix('authAdmin')->group(function () {

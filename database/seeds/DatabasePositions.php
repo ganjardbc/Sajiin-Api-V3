@@ -19,7 +19,6 @@ class DatabasePositions extends Seeder
                 'title' => 'Owner',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
-                'merchant_id' => '1',
                 'created_by' => '1',
                 "created_at" => '2020-06-28 19:08:45',
                 "updated_at" => '2020-06-28 19:08:45'
@@ -30,7 +29,6 @@ class DatabasePositions extends Seeder
                 'title' => 'Kitchen',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
-                'merchant_id' => '1',
                 'created_by' => '1',
                 "created_at" => '2020-06-28 19:08:45',
                 "updated_at" => '2020-06-28 19:08:45'
@@ -41,7 +39,6 @@ class DatabasePositions extends Seeder
                 'title' => 'Cashier',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
-                'merchant_id' => '1',
                 'created_by' => '1',
                 "created_at" => '2020-06-28 19:08:45',
                 "updated_at" => '2020-06-28 19:08:45'
@@ -52,7 +49,6 @@ class DatabasePositions extends Seeder
                 'title' => 'Waiter',
                 'description' => 'Lorem ipsum dolor ismet.',
                 'status' => 'active',
-                'merchant_id' => '1',
                 'created_by' => '1',
                 "created_at" => '2020-06-28 19:08:45',
                 "updated_at" => '2020-06-28 19:08:45'
