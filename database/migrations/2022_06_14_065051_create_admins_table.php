@@ -25,6 +25,8 @@ class CreateAdminsTable extends Migration
             $table->boolean('enabled')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('inactive');
             $table->rememberToken();
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
         });
     }

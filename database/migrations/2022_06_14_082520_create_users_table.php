@@ -29,6 +29,8 @@ class CreateUsersTable extends Migration
             $table->unsignedBigInteger('merchant_id');
             $table->unsignedBigInteger('employee_id');
             $table->rememberToken();
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
 
             $table->foreign('role_id')->references('id')->on('roles');

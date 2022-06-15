@@ -57,10 +57,10 @@ class AuthController extends Controller
                     $employee = null;
                     $shop = null;
                     
-                    if ($user->owner_id == null) {
+                    if ($user->employee_id == null) {
                         $shop = Shop::where(['user_id' => $user->id])->get();
                     } else {
-                        $employee = Employee::where(['id' => $user->owner_id])->first();
+                        $employee = Employee::where(['id' => $user->employee_id])->first();
                         if ($employee) {
                             $shop = Shop::where(['id' => $employee->shop_id])->get();
                         }
@@ -178,7 +178,7 @@ class AuthController extends Controller
         $data = User::GetUserWithEmail(Auth()->user()->email);
         $permission = RolePermission::GetAllSmallByID(1000, 0, $data['role_id']);
         $role = Role::where(['id' => $data['role_id']])->first();
-        $employee = Employee::where(['id' => $user->owner_id])->first();
+        $employee = Employee::where(['id' => $user->employee_id])->first();
         $token = $user->currentAccessToken();
         
         if ($data->role_name == "employee") {

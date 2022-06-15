@@ -2,12 +2,13 @@
 
 namespace App;
 
+// use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class Admin extends Authenticatable
 {
     use Notifiable, HasApiTokens;
 
@@ -17,7 +18,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'admin_id', 'name', 'email', 'password',
     ];
 
     /**
@@ -37,27 +38,4 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    public function scopeGetUserWithEmail($query, $email)
-    {
-        return $this
-        ->select(
-            'users.id',
-            'users.image',
-            'users.name',
-            'users.username',
-            'users.email',
-            'users.provider',
-            'users.enabled',
-            'users.status',
-            'users.password',
-            'users.employee_id',
-            'users.role_id',
-            'roles.role_id as main_role_id',
-            'roles.role_name'
-        )
-        ->join('roles', 'roles.id', '=', 'users.role_id')
-        ->where(['email'=> $email])
-        ->first();
-    }
 }
