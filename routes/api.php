@@ -80,6 +80,26 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('delete', 'MerchantController@delete');
     });
 
+    // position
+    Route::prefix('position')->group(function () {
+        Route::get('getAll', 'PositionController@getAll');
+        Route::get('getByID', 'PositionController@getByID');
+        Route::post('post', 'PositionController@post');
+        Route::put('update', 'PositionController@update');
+        Route::delete('delete', 'PositionController@delete');
+    });
+
+    // employee 
+    Route::prefix('employee')->group(function () {
+        Route::get('getAll', 'EmployeeController@getAll');
+        Route::get('getByID', 'EmployeeController@getByID');
+        Route::post('uploadImage', 'EmployeeController@uploadImage');
+        Route::post('removeImage', 'EmployeeController@removeImage');
+        Route::post('post', 'EmployeeController@post');
+        Route::put('update', 'EmployeeController@update');
+        Route::delete('delete', 'EmployeeController@delete');
+    });
+
     // user
     Route::prefix('user')->group(function () {
         // auth

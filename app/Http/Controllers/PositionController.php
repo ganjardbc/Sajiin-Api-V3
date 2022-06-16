@@ -39,8 +39,7 @@ class PositionController extends Controller
             $limit = $req['limit'];
             $offset = $req['offset'];
             $stt = $status ? ['status' => $status] : [];
-            $newStt = array_merge($stt, ['shop_id' => $req['shop_id']]);
-            $data = Position::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
+            $data = Position::where($stt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
             
             if ($data) 
             {
@@ -250,7 +249,6 @@ class PositionController extends Controller
         $validator = Validator::make($req->all(), [
             'position_id' => 'required|string|min:0|max:17|unique:positions',
             'title' => 'required|string',
-            'description' => 'required|string',
             'status' => 'required|string'
         ]);
 
@@ -274,7 +272,6 @@ class PositionController extends Controller
                 'title' => $req['title'],
                 'description' => $req['description'],
                 'status' => $req['status'],
-                'user_id' => Auth()->user()->id,
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
             ];
@@ -309,7 +306,6 @@ class PositionController extends Controller
         $validator = Validator::make($req->all(), [
             'position_id' => 'required|string|min:0|max:17',
             'title' => 'required|string',
-            'description' => 'required|string',
             'status' => 'required|string'
         ]);
 
@@ -330,7 +326,6 @@ class PositionController extends Controller
                 'title' => $req['title'],
                 'description' => $req['description'],
                 'status' => $req['status'],
-                'user_id' => Auth()->user()->id,
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
             ];

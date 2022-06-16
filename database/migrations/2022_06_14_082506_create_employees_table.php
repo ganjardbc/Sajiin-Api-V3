@@ -23,8 +23,8 @@ class CreateEmployeesTable extends Migration
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('inactive');
-            $table->unsignedBigInteger('merchant_id')->nullable();
-            $table->unsignedBigInteger('position_id')->nullable();
+            $table->unsignedBigInteger('merchant_id');
+            $table->unsignedBigInteger('position_id');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

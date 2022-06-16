@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Employee;
-use App\Shop;
+use App\Merchant;
 use App\Position;
 use Image;
 
@@ -38,26 +38,11 @@ class EmployeeController extends Controller
         else 
         {
             $status = $req['status'];
-            $uID = $req['user_id'];
-            $shID = $req['shop_id'];
             $limit = $req['limit'];
             $offset = $req['offset'];
             $stt = $status ? ['status' => $status] : [];
-            $data = [];
 
-            if (Auth()->user()->role_id == 1) {
-                $newStt = array_merge($stt);
-                $data = Employee::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            } else {
-                if ($uID) {
-                    $newStt = array_merge($stt, ['created_by' => $uID]);
-                    $data = Employee::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-                } 
-                if ($shID) {
-                    $newStt = array_merge($stt, ['shop_id' => $shID]);
-                    $data = Employee::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-                }
-            }
+            $data = Employee::where($stt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
             
             if ($data) 
             {
@@ -67,11 +52,11 @@ class EmployeeController extends Controller
                 
                 for ($i=0; $i < count($dump); $i++) { 
                     $employee = $dump[$i];
-                    $shop = Shop::where('id', $employee['shop_id'])->first();
+                    $merchant = Merchant::where('id', $employee['merchant_id'])->first();
                     $position = Position::where('id', $employee['position_id'])->first();
                     $payload = [
                         'employee' => $employee,
-                        'shop' => $shop,
+                        'merchant' => $merchant,
                         'position' => $position
                     ];
                     array_push($newPayload, $payload);
@@ -121,7 +106,7 @@ class EmployeeController extends Controller
             
             if ($data) 
             {
-                $data['shop'] = Shop::where('id', $data['shop_id'])->first();
+                $data['merchant'] = Merchant::where('id', $data['merchant_id'])->first();
                 $data['position'] = Position::where('id', $data['position_id'])->first();
                 $response = [
                     'message' => 'proceed success',
@@ -332,7 +317,7 @@ class EmployeeController extends Controller
             'phone' => 'required|string|max:13',
             'address' => 'required|string',
             'status' => 'string',
-            // 'shop_id' => 'required|integer',
+            // 'merchant_id' => 'required|integer',
             // 'position_id' => 'required|integer'
         ]);
 
@@ -357,7 +342,7 @@ class EmployeeController extends Controller
                 'status' => $req['status'],
                 'about' => $req['about'],
                 'address' => $req['address'],
-                'shop_id' => $req['shop_id'],
+                'merchant_id' => $req['merchant_id'],
                 'position_id' => $req['position_id'],
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
@@ -397,7 +382,7 @@ class EmployeeController extends Controller
             'phone' => 'required|string|max:13',
             'address' => 'required|string',
             'status' => 'string',
-            // 'shop_id' => 'required|integer',
+            // 'merchant_id' => 'required|integer',
             // 'position_id' => 'required|integer'
         ]);
 
@@ -421,7 +406,7 @@ class EmployeeController extends Controller
                 'status' => $req['status'],
                 'about' => $req['about'],
                 'address' => $req['address'],
-                'shop_id' => $req['shop_id'],
+                'merchant_id' => $req['merchant_id'],
                 'position_id' => $req['position_id'],
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
