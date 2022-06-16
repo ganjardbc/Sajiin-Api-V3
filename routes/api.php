@@ -138,6 +138,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'ShipmentController@update');
         Route::delete('delete', 'ShipmentController@delete');
     });
+
+    // category
+    Route::prefix('category')->group(function () {
+        Route::get('getAll', 'CategoryController@getAll');
+        Route::get('getByID', 'CategoryController@getByID');
+        Route::post('post', 'CategoryController@post');
+        Route::put('update', 'CategoryController@update');
+        Route::delete('delete', 'CategoryController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {
