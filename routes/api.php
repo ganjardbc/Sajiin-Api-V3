@@ -116,6 +116,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'UserController@update');
         Route::delete('delete', 'UserController@delete');
     });
+
+    // payment
+    Route::prefix('payment')->group(function () {
+        Route::get('getAll', 'PaymentController@getAll');
+        Route::get('getByID', 'PaymentController@getByID');
+        Route::post('post', 'PaymentController@post');
+        Route::post('uploadImage', 'PaymentController@uploadImage');
+        Route::post('removeImage', 'PaymentController@removeImage');
+        Route::put('update', 'PaymentController@update');
+        Route::delete('delete', 'PaymentController@delete');
+    });
+
+    // shipment
+    Route::prefix('shipment')->group(function () {
+        Route::get('getAll', 'ShipmentController@getAll');
+        Route::get('getByID', 'ShipmentController@getByID');
+        Route::post('post', 'ShipmentController@post');
+        Route::post('uploadImage', 'ShipmentController@uploadImage');
+        Route::post('removeImage', 'ShipmentController@removeImage');
+        Route::put('update', 'ShipmentController@update');
+        Route::delete('delete', 'ShipmentController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {

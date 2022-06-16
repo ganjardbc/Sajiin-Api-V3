@@ -19,6 +19,7 @@ class ShipmentController extends Controller
         $validator = Validator::make($req->all(), [
             'limit' => 'required|integer',
             'offset' => 'required|integer',
+            'merchant_id' => 'required|integer',
             'status' => 'string'
         ]);
 
@@ -38,10 +39,13 @@ class ShipmentController extends Controller
             $status = $req['status'];
             $limit = $req['limit'];
             $offset = $req['offset'];
-
             $stt = $status ? ['status' => $status] : [];
-            $newStt = array_merge($stt, ['user_id' => Auth()->user()->id]);
-            $data = Shipment::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
+            $newStt = array_merge($stt, ['merchant_id' => $req['merchant_id']]);
+            $data = Shipment::where($newStt)
+                ->limit($limit)
+                ->offset($offset)
+                ->orderBy('id', 'desc')
+                ->get();
             
             if ($data) 
             {
@@ -252,7 +256,8 @@ class ShipmentController extends Controller
             'shipment_id' => 'required|string|min:0|max:17|unique:shipments',
             'name' => 'required|string',
             'description' => 'required|string',
-            'status' => 'required|string'
+            'status' => 'required|string',
+            'merchant_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -275,7 +280,7 @@ class ShipmentController extends Controller
                 'name' => $req['name'],
                 'description' => $req['description'],
                 'status' => $req['status'],
-                'user_id' => Auth()->user()->id,
+                'merchant_id' => $req['merchant_id'],
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
             ];
@@ -331,7 +336,6 @@ class ShipmentController extends Controller
                 'name' => $req['name'],
                 'description' => $req['description'],
                 'status' => $req['status'],
-                'user_id' => Auth()->user()->id,
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
             ];
