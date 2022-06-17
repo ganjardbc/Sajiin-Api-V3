@@ -187,6 +187,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'StoreTableController@update');
         Route::delete('delete', 'StoreTableController@delete');
     });
+
+    // store payment
+    Route::prefix('storePayment')->group(function () {
+        Route::get('getAll', 'StorePaymentController@getAll');
+        Route::get('getByID', 'StorePaymentController@getByID');
+        Route::post('post', 'StorePaymentController@post');
+        Route::put('update', 'StorePaymentController@update');
+        Route::delete('delete', 'StorePaymentController@delete');
+    });
+
+    // store shipment
+    Route::prefix('storeShipment')->group(function () {
+        Route::get('getAll', 'StoreShipmentController@getAll');
+        Route::get('getByID', 'StoreShipmentController@getByID');
+        Route::post('post', 'StoreShipmentController@post');
+        Route::put('update', 'StoreShipmentController@update');
+        Route::delete('delete', 'StoreShipmentController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {

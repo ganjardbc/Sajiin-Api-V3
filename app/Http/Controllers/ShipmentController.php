@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Shipment;
+use App\Merchant;
 use Image;
 
 class ShipmentController extends Controller
@@ -49,11 +50,24 @@ class ShipmentController extends Controller
             
             if ($data) 
             {
+                $newPayload = array();
+                $dump = json_decode($data, true);
+
+                for ($i=0; $i < count($dump); $i++) { 
+                    $shipment = $dump[$i];
+                    $merchant = Merchant::where(['id' => $shipment['merchant_id']])->first();
+                    $payload = [
+                        'shipment' => $shipment,
+                        'merchant' => $merchant 
+                    ];
+                    array_push($newPayload, $payload);
+                }
+
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $data
+                    'data' => $newPayload
                 ];
             } 
             else 
@@ -94,11 +108,16 @@ class ShipmentController extends Controller
             
             if ($data) 
             {
+                $merchant = Merchant::where(['id' => $data['merchant_id']])->first();
+                $payload = [
+                    'shipment' => $data,
+                    'merchant' => $merchant 
+                ];
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $data
+                    'data' => $payload
                 ];
             } 
             else 

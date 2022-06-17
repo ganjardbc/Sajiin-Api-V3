@@ -109,7 +109,6 @@ class StoreTableController extends Controller
                     'table' => $data,
                     'store' => $store 
                 ];
-
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
