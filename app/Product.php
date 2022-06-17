@@ -15,16 +15,16 @@ class Product extends Model
             'products.product_id',
             'products.name',
             'products.description',
+            'products.price',
+            'products.second_price',
             'products.note',
             'products.type',
             'products.is_pinned',
             'products.is_available',
             'products.status',
-            'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name'
+            'products.merchant_id',
+            'products.category_id'
         )
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->where($stt)
         ->limit($limit)
         ->offset($offset)
@@ -40,16 +40,17 @@ class Product extends Model
             'products.product_id',
             'products.name',
             'products.description',
+            'products.price',
+            'products.second_price',
             'products.note',
             'products.type',
             'products.is_pinned',
             'products.is_available',
             'products.status',
-            'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name'
+            'products.merchant_id',
+            'products.merchant_id',
+            'products.category_id'
         )
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->where($stt)
         ->where('products.created_by', $id)
         ->limit($limit)
@@ -66,16 +67,16 @@ class Product extends Model
             'products.product_id',
             'products.name',
             'products.description',
+            'products.price',
+            'products.second_price',
             'products.note',
             'products.type',
             'products.is_pinned',
             'products.is_available',
             'products.status',
-            'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name'
+            'products.merchant_id',
+            'products.category_id'
         )
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->where('products.status', $status)
         ->limit($limit)
         ->offset($offset)
@@ -91,16 +92,16 @@ class Product extends Model
             'products.product_id',
             'products.name',
             'products.description',
+            'products.price',
+            'products.second_price',
             'products.note',
             'products.type',
             'products.is_pinned',
             'products.is_available',
             'products.status',
-            'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name'
+            'products.merchant_id',
+            'products.category_id'
         )
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->where(['products.product_id' => $id])
         ->first();
     }
@@ -113,16 +114,16 @@ class Product extends Model
             'products.product_id',
             'products.name',
             'products.description',
+            'products.price',
+            'products.second_price',
             'products.note',
             'products.type',
             'products.is_pinned',
             'products.is_available',
             'products.status',
-            'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name'
+            'products.merchant_id',
+            'products.category_id'
         )
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->where(['products.id' => $id])
         ->first();
     }
@@ -135,16 +136,16 @@ class Product extends Model
             'products.product_id',
             'products.name',
             'products.description',
+            'products.price',
+            'products.second_price',
             'products.note',
             'products.type',
             'products.is_pinned',
             'products.is_available',
             'products.status',
-            'products.user_id',
-            'categories.id as ctr_id',
-            'categories.name as ctr_name'
+            'products.merchant_id',
+            'products.category_id'
         )
-        ->join('categories', 'categories.id', '=', 'products.category_id')
         ->where(['products.product_id' => $id, 'products.status' => $status])
         ->first();
     }

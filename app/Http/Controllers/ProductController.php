@@ -5,10 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Product;
-use App\ProductDetail;
 use App\ProductImage;
-use App\ProductToping;
-use App\Shop;
+use App\Category;
+use App\Merchant;
 
 class ProductController extends Controller
 {
@@ -22,8 +21,8 @@ class ProductController extends Controller
         $validator = Validator::make($req->all(), [
             'limit' => 'required|integer',
             'offset' => 'required|integer',
-            'status' => 'string',
-            'shop_id' => 'integer'
+            'merchant_id' => 'required|integer',
+            'status' => 'string'
         ]);
 
         $response = [];
@@ -39,20 +38,12 @@ class ProductController extends Controller
         } 
         else 
         {
-            $sID = $req['shop_id'];
             $status = $req['status'];
             $limit = $req['limit'];
             $offset = $req['offset'];
-
             $stt = $status ? ['status' => $status] : [];
-            if ($sID) {
-                $shop = Shop::where('id', $sID)->first();
-                $newStt = array_merge($stt, ['user_id' => $shop['user_id']]);
-                $data = Product::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            } else {
-                $newStt = array_merge($stt, ['user_id' => Auth()->user()->id]);
-                $data = Product::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            }
+            $newStt = array_merge($stt, ['products.merchant_id' => $req['merchant_id']]);
+            $data = Product::GetAll($limit, $offset, $newStt);
             
             if ($data) 
             {
@@ -63,14 +54,14 @@ class ProductController extends Controller
                 for ($i=0; $i < count($dump); $i++) { 
                     $product = $dump[$i];
                     $stt = $status ? ['status' => $status] : [];
-                    $detailProduct = ProductDetail::where(array_merge(['product_id' => $dump[$i]['id']], $stt))->orderBy('id', 'desc')->get();
                     $detailImage = ProductImage::where(['product_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
-                    $detailToping = ProductToping::GetAll(1000, 0, $dump[$i]['id'], $stt);
+                    $detailCategory = Category::where(['id' => $dump[$i]['category_id']])->first();
+                    $detailMerchant = Merchant::where(['id' => $dump[$i]['merchant_id']])->first();
                     $payload = [
                         'product' => $product,
-                        'details' => $detailProduct,
                         'images' => $detailImage,
-                        'topings' => $detailToping
+                        'category' => $detailCategory,
+                        'merchant' => $detailMerchant
                     ];
                     array_push($newPayload, $payload);
                 }
@@ -122,16 +113,14 @@ class ProductController extends Controller
             {
                 $dump = json_decode($data, true);
                 $product = $dump;
-
-                $detailProduct = ProductDetail::where(['product_id' => $dump['id']])->orderBy('id', 'desc')->get();
                 $detailImage = ProductImage::where(['product_id' => $dump['id']])->orderBy('id', 'desc')->get();
-                $detailToping = ProductToping::GetAll(1000, 0, $dump['id'], []);
-
+                $detailCategory = Category::where(['id' => $dump['category_id']])->first();
+                $detailMerchant = Merchant::where(['id' => $dump['merchant_id']])->first();
                 $newPayload = [
                     'product' => $product,
-                    'details' => $detailProduct,
                     'images' => $detailImage,
-                    'topings' => $detailToping
+                    'category' => $detailCategory,
+                    'merchant' => $detailMerchant
                 ];
 
                 $response = [
@@ -161,10 +150,13 @@ class ProductController extends Controller
             'product_id' => 'required|string|min:0|max:17|unique:products',
             'name' => 'required|string',
             'description' => 'required|string',
+            'price' => 'required|integer',
             'note' => 'max:255',
             'is_pinned' => 'required|boolean',
             'is_available' => 'required|boolean',
-            'status' => 'required|string'
+            'status' => 'required|string',
+            'merchant_id' =>'required|integer',
+            'category_id' =>'required|integer',
         ]);
 
         $response = [];
@@ -184,12 +176,15 @@ class ProductController extends Controller
                 'product_id' => $req['product_id'],
                 'name' => $req['name'],
                 'description' => $req['description'],
+                'price' => $req['price'],
+                'second_price' => $req['second_price'],
                 'note' => $req['note'],
                 'type' => $req['type'],
                 'is_pinned' => $req['is_pinned'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
-                'user_id' => Auth()->user()->id,
+                'merchant_id' => $req['merchant_id'],
+                'category_id' => $req['category_id'],
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
             ];
@@ -225,10 +220,13 @@ class ProductController extends Controller
             'product_id' => 'required|string|min:0|max:17',
             'name' => 'required|string',
             'description' => 'required|string',
+            'price' => 'required|integer',
             'note' => 'max:255',
             'is_pinned' => 'required|boolean',
             'is_available' => 'required|boolean',
-            'status' => 'required|string'
+            'status' => 'required|string',
+            'merchant_id' =>'required|integer',
+            'category_id' =>'required|integer',
         ]);
 
         $response = [];
@@ -247,11 +245,14 @@ class ProductController extends Controller
             $payload = [
                 'name' => $req['name'],
                 'description' => $req['description'],
+                'price' => $req['price'],
+                'second_price' => $req['second_price'],
                 'note' => $req['note'],
                 'type' => $req['type'],
                 'is_pinned' => $req['is_pinned'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
+                'category_id' => $req['category_id'],
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
             ];
@@ -304,9 +305,7 @@ class ProductController extends Controller
 
             if ($data)
             {
-                ProductDetail::where(['product_id' => $data->id])->delete();
                 ProductImage::where(['product_id' => $data->id])->delete();
-                ProductToping::where(['product_id' => $data->id])->delete();
                 Product::where(['id' => $data->id])->delete();
 
                 $response = [

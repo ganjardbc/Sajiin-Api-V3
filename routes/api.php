@@ -147,6 +147,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'CategoryController@update');
         Route::delete('delete', 'CategoryController@delete');
     });
+
+    // product
+    Route::prefix('product')->group(function () {
+        Route::get('getAll', 'ProductController@getAll');
+        Route::get('getByID', 'ProductController@getByID');
+        Route::post('post', 'ProductController@post');
+        Route::put('update', 'ProductController@update');
+        Route::delete('delete', 'ProductController@delete');
+    });
+
+    // product image
+    Route::prefix('productImage')->group(function () {
+        Route::get('getAll', 'ProductImageController@getAll');
+        Route::get('getByID', 'ProductImageController@getByID');
+        Route::post('post', 'ProductImageController@post');
+        Route::put('update', 'ProductImageController@update');
+        Route::delete('delete', 'ProductImageController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {
