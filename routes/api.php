@@ -165,6 +165,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'ProductImageController@update');
         Route::delete('delete', 'ProductImageController@delete');
     });
+
+    // store
+    Route::prefix('store')->group(function () {
+        Route::get('getAll', 'StoreController@getAll');
+        Route::get('getByID', 'StoreController@getByID');
+        Route::post('post', 'StoreController@post');
+        Route::post('uploadImage', 'StoreController@uploadImage');
+        Route::post('removeImage', 'StoreController@removeImage');
+        Route::put('update', 'StoreController@update');
+        Route::delete('delete', 'StoreController@delete');
+    });
+
+    // store table
+    Route::prefix('storeTable')->group(function () {
+        Route::get('getAll', 'StoreTableController@getAll');
+        Route::get('getByID', 'StoreTableController@getByID');
+        Route::post('post', 'StoreTableController@post');
+        Route::post('uploadImage', 'StoreTableController@uploadImage');
+        Route::post('removeImage', 'StoreTableController@removeImage');
+        Route::put('update', 'StoreTableController@update');
+        Route::delete('delete', 'StoreTableController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {

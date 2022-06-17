@@ -4,26 +4,24 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Table;
-use App\Cart;
-use App\WisheList;
-use App\Shop;
+use App\Store;
+use App\Merchant;
 use Image;
 
-class TableController extends Controller
+class StoreController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth:sanctum');
     }
 
-    public function getAllWithShop(Request $req)
+    public function getAll(Request $req)
     {
         $validator = Validator::make($req->all(), [
             'limit' => 'required|integer',
             'offset' => 'required|integer',
-            'status' => 'string',
-            'user_id' => 'integer'
+            'merchant_id' => 'required|integer',
+            'status' => 'string'
         ]);
 
         $response = [];
@@ -39,35 +37,23 @@ class TableController extends Controller
         } 
         else 
         {
-            $uID = $req['user_id'];
-            $shID = $req['shop_id'];
             $status = $req['status'];
             $limit = $req['limit'];
             $offset = $req['offset'];
             $stt = $status ? ['status' => $status] : [];
-            $data = [];
-
-            if ($uID) 
-            {
-                $data = Table::where($stt)->where(['created_by' => $uID])->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            } 
-            if ($shID) 
-            {
-                $data = Table::where($stt)->where(['shop_id' => $shID])->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            }
-
+            $newStt = array_merge($stt, ['merchant_id' => $req['merchant_id']]);
+            $data = Store::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
             if ($data) 
             {
                 $newPayload = array();
-
                 $dump = json_decode($data, true);
-                
+
                 for ($i=0; $i < count($dump); $i++) { 
-                    $table = $dump[$i];
-                    $shop = Shop::where('id', $table['shop_id'])->first();
+                    $store = $dump[$i];
+                    $merchant = Merchant::where(['id' => $store['merchant_id']])->first();
                     $payload = [
-                        'table' => $table,
-                        'shop' => $shop
+                        'store' => $store,
+                        'merchant' => $merchant 
                     ];
                     array_push($newPayload, $payload);
                 }
@@ -92,73 +78,11 @@ class TableController extends Controller
 
         return response()->json($response, 200);
     }
-    
-    public function getAll(Request $req)
-    {
-        $validator = Validator::make($req->all(), [
-            'limit' => 'required|integer',
-            'offset' => 'required|integer',
-            'status' => 'string',
-            'user_id' => 'integer',
-            'shop_id' => 'integer'
-        ]);
-
-        $response = [];
-
-        if ($validator->fails()) 
-        {
-            $response = [
-                'message' => $validator->errors(),
-                'status' => 'invalide',
-                'code' => '201',
-                'data' => []
-            ];
-        } 
-        else 
-        {
-            $uID = $req['user_id'];
-            $sID = $req['shop_id'];
-            $status = $req['status'];
-            $limit = $req['limit'];
-            $offset = $req['offset'];
-            $stt = $status ? ['status' => $status] : [];
-            $data = [];
-
-            if ($uID) 
-            {
-                $data = Table::where($stt)->where(['created_by' => $uID])->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            } 
-            if ($sID) {
-                $data = Table::where($stt)->where(['shop_id' => $sID])->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            }
-
-            if ($data) 
-            {
-                $response = [
-                    'message' => 'proceed success',
-                    'status' => 'ok',
-                    'code' => '201',
-                    'data' => $data
-                ];
-            } 
-            else 
-            {
-                $response = [
-                    'message' => 'failed to get datas',
-                    'status' => 'failed',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-        }
-
-        return response()->json($response, 200);
-    }
 
     public function getByID(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'table_id' => 'required|string|min:0|max:17',
+            'store_id' => 'required|string|min:0|max:17',
         ]);
 
         $response = [];
@@ -174,16 +98,22 @@ class TableController extends Controller
         } 
         else 
         {
-            $table_id = $req['table_id'];
-            $data = Table::where(['table_id' => $table_id])->first();
+            $store_id = $req['store_id'];
+            $data = Store::where(['store_id' => $store_id])->first();
             
             if ($data) 
             {
+                $merchant = Merchant::where(['id' => $data['merchant_id']])->first();
+                $payload = [
+                    'store' => $data,
+                    'merchant' => $merchant 
+                ];
+
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $data
+                    'data' => $payload
                 ];
             } 
             else 
@@ -203,7 +133,7 @@ class TableController extends Controller
     public function removeImage(Request $req) 
     {
         $validator = Validator::make($req->all(), [
-            'table_id' => 'required|string|min:0|max:17',
+            'store_id' => 'required|string|min:0|max:17',
         ]);
         
         $response = [];
@@ -225,19 +155,19 @@ class TableController extends Controller
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 
-            $filename = Table::where(['table_id' => $req['table_id']])->first()->image;
-            $data = Table::where(['table_id' => $req['table_id']])->update($payload);
+            $filename = Store::where(['store_id' => $req['store_id']])->first()->image;
+            $data = Store::where(['store_id' => $req['store_id']])->update($payload);
 
             if ($data)
             {
-                unlink(public_path('contents/tables/thumbnails/'.$filename));
-				unlink(public_path('contents/tables/covers/'.$filename));
+                unlink(public_path('contents/stores/thumbnails/'.$filename));
+				unlink(public_path('contents/stores/covers/'.$filename));
 
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => Table::where(['table_id' => $req['table_id']])->first()
+                    'data' => Store::where(['store_id' => $req['store_id']])->first()
                 ];
             }
             else 
@@ -255,7 +185,7 @@ class TableController extends Controller
     public function uploadImage(Request $req) 
     {
         $validator = Validator::make($req->all(), [
-            'table_id' => 'required|string|min:0|max:17',
+            'store_id' => 'required|string|min:0|max:17',
             'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:1000000'
         ]);
 
@@ -272,7 +202,7 @@ class TableController extends Controller
         } 
         else 
         {
-            $id = $req['table_id'];
+            $id = $req['store_id'];
             $image = $req['image'];
 
             $chrc = array('[',']','@',' ','+','-','#','*','<','>','_','(',')',';',',','&','%','$','!','`','~','=','{','}','/',':','?','"',"'",'^');
@@ -282,14 +212,14 @@ class TableController extends Controller
 
             //save image to server
 			//creating thumbnail and save to server
-			$destination = public_path('contents/tables/thumbnails/'.$filename);
+			$destination = public_path('contents/stores/thumbnails/'.$filename);
 			$img = Image::make($image->getRealPath());
 			$thumbnail = $img->resize(400, 400, function ($constraint) {
 					$constraint->aspectRatio();
 				})->save($destination); 
 
 			//saving image real to server
-			$destination = public_path('contents/tables/covers/');
+			$destination = public_path('contents/stores/covers/');
 			$real = $image->move($destination, $filename);
 
             if ($thumbnail && $real) 
@@ -300,7 +230,7 @@ class TableController extends Controller
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
     
-                $data = Table::where(['table_id' => $req['table_id']])->update($payload);
+                $data = Store::where(['store_id' => $req['store_id']])->update($payload);
     
                 if ($data)
                 {
@@ -308,7 +238,7 @@ class TableController extends Controller
                         'message' => 'proceed success',
                         'status' => 'ok',
                         'code' => '201',
-                        'data' => Table::where(['table_id' => $req['table_id']])->first()
+                        'data' => Store::where(['store_id' => $req['store_id']])->first()
                     ];
                 }
                 else 
@@ -335,70 +265,22 @@ class TableController extends Controller
         return response()->json($response, 200);
     }
 
-    public function saveTable(Request $req)
-    {
-        $validator = Validator::make($req->all(), [
-            'prev_table_id' => 'required|integer',
-            'next_table_id' => 'required|integer'
-        ]);
-
-        $response = [];
-
-        if ($validator->fails()) 
-        {
-            $response = [
-                'message' => $validator->errors(),
-                'status' => 'invalide',
-                'code' => '201',
-                'data' => []
-            ];
-        } else {
-            $prev = $req['prev_table_id'];
-            $next = $req['next_table_id'];
-
-            // update prev table
-            if ($prev != 0) {
-                Table::where(['id' => $prev])->update(['status' => 'active']);
-            }
-
-            $data = Table::where(['id' => $next])->update(['status' => 'inactive']);;
-
-            if ($data)
-            {
-                Cart::where(['owner_id' => $prev])->delete();
-                WisheList::where(['owner_id' => $prev])->delete();
-
-                $response = [
-                    'message' => 'proceed success',
-                    'status' => 'ok',
-                    'code' => '201',
-                    'data' => Table::where(['id' => $next])->first()
-                ];
-            }
-            else 
-            {
-                $response = [
-                    'message' => 'failed to save',
-                    'status' => 'failed',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-        }
-
-        return response()->json($response, 200);
-    }
-
     public function post(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'table_id' => 'required|string|min:0|max:17|unique:tables',
-            'code' => 'string',
+            'store_id' => 'required|string|min:0|max:17|unique:stores',
             'name' => 'required|string',
-            'description' => 'string',
-            'is_available' => 'required|boolean',
+            'about' => 'required|string',
+            'location' => 'required|string',
+            'email' => 'required|email|string',
+            'phone' => 'required|string',
+            'open_day' => 'required|string',
+            'close_day' => 'required|string',
+            'open_time' => 'required|string',
+            'close_time' => 'required|string',
+            'is_available' => 'required|integer',
             'status' => 'required|string',
-            'shop_id' => 'required|integer'
+            'merchant_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -415,18 +297,24 @@ class TableController extends Controller
         else 
         {
             $payload = [
-                'table_id' => $req['table_id'],
-                'code' => $req['code'],
+                'store_id' => $req['store_id'],
                 'name' => $req['name'],
-                'description' => $req['description'],
+                'about' => $req['about'],
+                'location' => $req['location'],
+                'email' => $req['email'],
+                'phone' => $req['phone'],
+                'open_day' => $req['open_day'],
+                'close_day' => $req['close_day'],
+                'open_time' => $req['open_time'],
+                'close_time' => $req['close_time'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
-                'shop_id' => $req['shop_id'],
+                'merchant_id' => $req['merchant_id'],
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
             ];
 
-            $data = Table::insert($payload);
+            $data = Store::insert($payload);
 
             if ($data)
             {
@@ -434,7 +322,7 @@ class TableController extends Controller
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => Table::where(['table_id' => $req['table_id']])->first()
+                    'data' => Store::where(['store_id' => $req['store_id']])->first()
                 ];
             }
             else 
@@ -454,13 +342,18 @@ class TableController extends Controller
     public function update(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'table_id' => 'required|string|min:0|max:17',
-            'code' => 'string',
+            'store_id' => 'required|string|min:0|max:17',
             'name' => 'required|string',
-            'description' => 'string',
-            'is_available' => 'required|boolean',
-            'status' => 'required|string',
-            'shop_id' => 'required|integer'
+            'about' => 'required|string',
+            'location' => 'required|string',
+            'email' => 'required|string',
+            'phone' => 'required|string',
+            'open_day' => 'required|string',
+            'close_day' => 'required|string',
+            'open_time' => 'required|string',
+            'close_time' => 'required|string',
+            'is_available' => 'required|integer',
+            'status' => 'required|string'
         ]);
 
         $response = [];
@@ -477,17 +370,22 @@ class TableController extends Controller
         else 
         {
             $payload = [
-                'code' => $req['code'],
                 'name' => $req['name'],
-                'description' => $req['description'],
+                'about' => $req['about'],
+                'location' => $req['location'],
+                'email' => $req['email'],
+                'phone' => $req['phone'],
+                'open_day' => $req['open_day'],
+                'close_day' => $req['close_day'],
+                'open_time' => $req['open_time'],
+                'close_time' => $req['close_time'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
-                'shop_id' => $req['shop_id'],
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 
-            $data = Table::where(['table_id' => $req['table_id']])->update($payload);
+            $data = Store::where(['store_id' => $req['store_id']])->update($payload);
 
             if ($data)
             {
@@ -495,7 +393,7 @@ class TableController extends Controller
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => Table::where(['table_id' => $req['table_id']])->first()
+                    'data' => Store::where(['store_id' => $req['store_id']])->first()
                 ];
             }
             else 
@@ -515,7 +413,7 @@ class TableController extends Controller
     public function delete(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'table_id' => 'required|string|min:0|max:17',
+            'store_id' => 'required|string|min:0|max:17',
         ]);
 
         $response = [];
@@ -531,7 +429,7 @@ class TableController extends Controller
         } 
         else 
         {
-            $data = Table::where(['table_id' => $req['table_id']])->delete();
+            $data = Store::where(['store_id' => $req['store_id']])->delete();
 
             if ($data)
             {
