@@ -214,6 +214,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'StoreProductController@update');
         Route::delete('delete', 'StoreProductController@delete');
     });
+
+    // shift 
+    Route::prefix('shift')->group(function () {
+        Route::get('getAll', 'ShiftController@getAll');
+        Route::get('getByID', 'ShiftController@getByID');
+        Route::post('post', 'ShiftController@post');
+        Route::put('update', 'ShiftController@update');
+        Route::delete('delete', 'ShiftController@delete');
+    });
+
+    // employee shifts 
+    Route::prefix('employeeShift')->group(function () {
+        Route::get('getAll', 'EmployeeShiftController@getAll');
+        Route::post('post', 'EmployeeShiftController@post');
+        Route::delete('delete', 'EmployeeShiftController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {
