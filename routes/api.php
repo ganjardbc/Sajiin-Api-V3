@@ -205,6 +205,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'StoreShipmentController@update');
         Route::delete('delete', 'StoreShipmentController@delete');
     });
+
+    // store product
+    Route::prefix('storeProduct')->group(function () {
+        Route::get('getAll', 'StoreProductController@getAll');
+        Route::get('getByID', 'StoreProductController@getByID');
+        Route::post('post', 'StoreProductController@post');
+        Route::put('update', 'StoreProductController@update');
+        Route::delete('delete', 'StoreProductController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {

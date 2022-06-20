@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Store;
+use App\Category;
 use App\Product;
 use App\ProductImage;
-use App\Category;
-use App\Merchant;
+use App\StoreProduct;
 
-class ProductController extends Controller
+class StoreProductController extends Controller
 {
     public function __construct()
     {
@@ -21,8 +22,8 @@ class ProductController extends Controller
         $validator = Validator::make($req->all(), [
             'limit' => 'required|integer',
             'offset' => 'required|integer',
-            'merchant_id' => 'required|integer',
-            'status' => 'string'
+            'status' => 'string',
+            'store_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -42,24 +43,25 @@ class ProductController extends Controller
             $limit = $req['limit'];
             $offset = $req['offset'];
             $stt = $status ? ['status' => $status] : [];
-            $newStt = array_merge($stt, ['products.merchant_id' => $req['merchant_id']]);
-            $data = Product::GetAll($limit, $offset, $newStt);
+            $newStt = array_merge($stt, ['store_id' => $req['store_id']]);
+            $data = StoreProduct::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
             
             if ($data) 
             {
                 $newPayload = array();
-
                 $dump = json_decode($data, true);
 
                 for ($i=0; $i < count($dump); $i++) { 
-                    $product = $dump[$i];
-                    $product['product_image'] = ProductImage::where(['product_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
-                    $detailCategory = Category::where(['id' => $dump[$i]['category_id']])->first();
-                    $detailMerchant = Merchant::where(['id' => $dump[$i]['merchant_id']])->first();
+                    $store_product = $dump[$i];
+                    $store = Store::where(['id' => $store_product['store_id']])->first();
+                    $product = Product::where(['id' => $store_product['product_id']])->first(); 
+                    $product['product_image'] = ProductImage::where(['product_id' => $product['id']])->get();
+                    $category = Category::where(['id' => $store_product['category_id']])->first();
                     $payload = [
+                        'store_product' => $store_product,
                         'product' => $product,
-                        'category' => $detailCategory,
-                        'merchant' => $detailMerchant
+                        'category' => $category,
+                        'store' => $store 
                     ];
                     array_push($newPayload, $payload);
                 }
@@ -88,7 +90,7 @@ class ProductController extends Controller
     public function getByID(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'product_id' => 'required|string',
+            'store_product_id' => 'required|string|min:0|max:17',
         ]);
 
         $response = [];
@@ -104,27 +106,26 @@ class ProductController extends Controller
         } 
         else 
         {
-            $product_id = $req['product_id'];
-            $data = Product::GetByID($product_id);
+            $store_product_id = $req['store_product_id'];
+            $data = StoreProduct::where(['store_product_id' => $store_product_id])->first();
             
             if ($data) 
             {
-                $dump = json_decode($data, true);
-                $product = $dump;
-                $product['product_image'] = ProductImage::where(['product_id' => $dump['id']])->orderBy('id', 'desc')->get();
-                $detailCategory = Category::where(['id' => $dump['category_id']])->first();
-                $detailMerchant = Merchant::where(['id' => $dump['merchant_id']])->first();
-                $newPayload = [
+                $product = Product::where(['id' => $data['product_id']])->first(); 
+                $product['product_image'] = ProductImage::where(['product_id' => $product['id']])->get();
+                $store = Store::where(['id' => $data['store_id']])->first();
+                $category = Category::where(['id' => $data['category_id']])->first();
+                $payload = [
+                    'store_product' => $data,
                     'product' => $product,
-                    'category' => $detailCategory,
-                    'merchant' => $detailMerchant
+                    'category' => $category,
+                    'store' => $store 
                 ];
-
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $newPayload
+                    'data' => $payload
                 ];
             } 
             else 
@@ -144,16 +145,14 @@ class ProductController extends Controller
     public function post(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'product_id' => 'required|string|min:0|max:17|unique:products',
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'price' => 'required|integer',
+            'store_product_id' => 'required|string|min:0|max:17|unique:store_products',
+            'store_id' => 'required|integer',
+            'product_id' => 'required|integer',
+            'category_id' => 'required|integer',
             'note' => 'max:255',
             'is_pinned' => 'required|boolean',
             'is_available' => 'required|boolean',
-            'status' => 'required|string',
-            'merchant_id' =>'required|integer',
-            'category_id' =>'required|integer',
+            'status' => 'string'
         ]);
 
         $response = [];
@@ -170,23 +169,19 @@ class ProductController extends Controller
         else 
         {
             $payload = [
+                'store_product_id' => $req['store_product_id'],
+                'store_id' => $req['store_id'],
                 'product_id' => $req['product_id'],
-                'name' => $req['name'],
-                'description' => $req['description'],
-                'price' => $req['price'],
-                'second_price' => $req['second_price'],
+                'category_id' => $req['category_id'],
                 'note' => $req['note'],
-                'type' => $req['type'],
                 'is_pinned' => $req['is_pinned'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
-                'merchant_id' => $req['merchant_id'],
-                'category_id' => $req['category_id'],
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
             ];
 
-            $data = Product::insert($payload);
+            $data = StoreProduct::insert($payload);
 
             if ($data)
             {
@@ -194,7 +189,7 @@ class ProductController extends Controller
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => Product::where(['product_id' => $req['product_id']])->first()
+                    'data' => StoreProduct::where(['store_product_id' => $req['store_product_id']])->first()
                 ];
             }
             else 
@@ -214,16 +209,12 @@ class ProductController extends Controller
     public function update(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'product_id' => 'required|string|min:0|max:17',
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'price' => 'required|integer',
+            'store_product_id' => 'required|string|min:0|max:17',
+            'category_id' => 'required|integer',
             'note' => 'max:255',
             'is_pinned' => 'required|boolean',
             'is_available' => 'required|boolean',
-            'status' => 'required|string',
-            'merchant_id' =>'required|integer',
-            'category_id' =>'required|integer',
+            'status' => 'string'
         ]);
 
         $response = [];
@@ -240,21 +231,16 @@ class ProductController extends Controller
         else 
         {
             $payload = [
-                'name' => $req['name'],
-                'description' => $req['description'],
-                'price' => $req['price'],
-                'second_price' => $req['second_price'],
+                'category_id' => $req['category_id'],
                 'note' => $req['note'],
-                'type' => $req['type'],
                 'is_pinned' => $req['is_pinned'],
                 'is_available' => $req['is_available'],
                 'status' => $req['status'],
-                'category_id' => $req['category_id'],
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 
-            $data = Product::where(['product_id' => $req['product_id']])->update($payload);
+            $data = StoreProduct::where(['store_product_id' => $req['store_product_id']])->update($payload);
 
             if ($data)
             {
@@ -262,7 +248,7 @@ class ProductController extends Controller
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => Product::where(['product_id' => $req['product_id']])->first()
+                    'data' => StoreProduct::where(['store_product_id' => $req['store_product_id']])->first()
                 ];
             }
             else 
@@ -282,7 +268,7 @@ class ProductController extends Controller
     public function delete(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'product_id' => 'required|string|min:0|max:17',
+            'store_product_id' => 'required|string|min:0|max:17',
         ]);
 
         $response = [];
@@ -298,13 +284,10 @@ class ProductController extends Controller
         } 
         else 
         {
-            $data = Product::where(['product_id' => $req['product_id']])->first();
+            $data = StoreProduct::where(['store_product_id' => $req['store_product_id']])->delete();
 
             if ($data)
             {
-                ProductImage::where(['product_id' => $data->id])->delete();
-                Product::where(['id' => $data->id])->delete();
-
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
