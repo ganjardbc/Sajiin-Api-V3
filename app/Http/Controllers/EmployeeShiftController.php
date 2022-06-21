@@ -38,18 +38,31 @@ class EmployeeShiftController extends Controller
         {
             $limit = $req['limit'];
             $offset = $req['offset'];
-            $id = $req['shift_id'];
-
-            $shift = Shift::where(['shift_id' => $id])->first();
-            $data = EmployeeShift::GetAll($limit, $offset, $shift->id);
+            $data = EmployeeShift::limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
             
             if ($data) 
             {
+                $newPayload = array();
+
+                $dump = json_decode($data, true);
+                
+                for ($i=0; $i < count($dump); $i++) { 
+                    $employee_shift = $dump[$i];
+                    $shift = Shift::where(['id' => $employee_shift['shift_id']])->first();
+                    $employee = Employee::where(['id' => $employee_shift['employee_id']])->first();
+                    $payload = [
+                        'employee_shift' => $employee_shift,
+                        'shift' => $shift,
+                        'employee' => $employee
+                    ];
+                    array_push($newPayload, $payload);
+                }
+
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $data
+                    'data' => $newPayload
                 ];
             } 
             else 
@@ -95,19 +108,19 @@ class EmployeeShiftController extends Controller
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
             ];
-
             $check = EmployeeShift::where(['shift_id' => $req['shift_id'], 'employee_id' => $req['employee_id'],])->first();
-
-            if ($check) {
+            if ($check) 
+            {
                 $response = [
                     'message' => 'data already choosed',
                     'status' => 'failed',
                     'code' => '201',
                     'data' => []
                 ];
-            } else {
+            } 
+            else 
+            {
                 $data = EmployeeShift::insert($payload);
-
                 if ($data)
                 {
                     $response = [
