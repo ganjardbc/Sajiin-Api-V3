@@ -16,8 +16,13 @@ class CreateCartsTable extends Migration
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
             $table->string('cart_id')->unique();
-            $table->bigInteger('quantity')->default(0);
-            $table->bigInteger('total_price')->default(0);
+            $table->bigInteger('price')->default(0);
+            $table->bigInteger('discount')->default(0);
+            $table->integer('quantity')->default(0);
+            $table->bigInteger('subtotal')->default(0);
+            $table->string('product_image')->nullable();
+            $table->string('product_name');
+            $table->string('product_detail')->nullable();
             $table->string('note')->nullable();
             $table->string('status')->nullable();
             $table->unsignedBigInteger('customer_id');

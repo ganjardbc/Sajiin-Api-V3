@@ -38,10 +38,8 @@ class DatabaseSeeder extends Seeder
             'DatabaseAddresses',
             'DatabaseWishLists',
             'DatabaseOrders',
-            'DatabaseOrderPlans',
             'DatabaseOrderItems',
-            'DatabaseCarts',
-            'DatabaseCartItems'
+            'DatabaseCarts'
         ]);
     }
 }

@@ -25,7 +25,7 @@ class CreateOrderItemsTable extends Migration
             $table->string('product_detail')->nullable();
             $table->string('promo_code')->nullable();
             $table->string('status')->nullable();
-            $table->unsignedBigInteger('order_plan_id');
+            $table->unsignedBigInteger('order_id');
             $table->unsignedBigInteger('product_id')->nullable();
             $table->unsignedBigInteger('store_id')->nullable();
             $table->unsignedBigInteger('employee_id')->nullable();
@@ -33,7 +33,7 @@ class CreateOrderItemsTable extends Migration
             $table->string('updated_by')->nullable();
             $table->timestamps();
 
-            $table->foreign('order_plan_id')->references('id')->on('order_plans');
+            $table->foreign('order_id')->references('id')->on('orders');
         });
     }
 

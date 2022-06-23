@@ -8,13 +8,12 @@ use Illuminate\Support\Facades\DB;
 use App\Cart;
 use App\Order;
 use App\OrderItem;
-use App\PartnerConfiguration;
-use App\Table;
+use App\StoreTable;
 use App\Customer;
 use App\Address;
 use App\Shipment;
 use App\Payment;
-use App\Shop;
+use App\Store;
 use Carbon\Carbon;
 
 
@@ -28,7 +27,7 @@ class OrderController extends Controller
     public function getDashboard(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'shop_id' => 'required|integer'
+            'store_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -44,12 +43,12 @@ class OrderController extends Controller
         } 
         else 
         {
-            $shID = $req['shop_id'];
+            $shID = $req['store_id'];
             $data = Order::select([
                             DB::raw('DATE(created_at) AS date'),
                             DB::raw('COUNT(id) AS count')
                         ])
-                        ->where(['shop_id' => $shID])
+                        ->where(['store_id' => $shID])
                         ->whereBetween('created_at', [Carbon::now()->subDays(30), Carbon::now()])
                         ->groupBy('date')
                         ->orderBy('date', 'ASC')
@@ -78,14 +77,14 @@ class OrderController extends Controller
         return response()->json($response, 200);
     }
 
+    // START GET DATA
     public function getAll(Request $req)
     {
         $validator = Validator::make($req->all(), [
             'limit' => 'required|integer',
             'offset' => 'required|integer',
-            'user_id' => 'integer',
-            'owner_id' => 'integer',
-            'shop_id' => 'integer'
+            'store_id' => 'required|integer',
+            'status' => 'string',
         ]);
 
         $response = [];
@@ -101,39 +100,16 @@ class OrderController extends Controller
         } 
         else 
         {
-            $oID = $req['owner_id'];
-            $uID = $req['user_id'];
-            $shID = $req['shop_id'];
+            $status = $req['status'];
             $limit = $req['limit'];
             $offset = $req['offset'];
-            if ($uID) {
-                $data = Order::where(['created_by' => $uID])
-                        ->where('status', '!=', 'canceled')
-                        ->where('status', '!=', 'done')
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            } else if ($shID) {
-                $data = Order::where(['shop_id' => $shID])
-                        ->where('status', '!=', 'canceled')
-                        ->where('status', '!=', 'done')
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            } else if ($oID) {
-                $data = Order::where(['customer_id' => $oID])
-                        ->where('status', '!=', 'canceled')
-                        ->where('status', '!=', 'done')
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            }
-            else {
-                $data = [];
-            }
+            $stt = $status ? ['status' => $status] : [];
+            $newStt = array_merge($stt, ['store_id' => $req['store_id']]);
+            $data = Order::where($newStt)
+                ->limit($limit)
+                ->offset($offset)
+                ->orderBy('id', 'desc')
+                ->get();
             
             if ($data) 
             {
@@ -146,225 +122,23 @@ class OrderController extends Controller
 
                 for ($i=0; $i < count($dump); $i++) { 
                     $order = $dump[$i];
-                    $orderItems = OrderItem::GetByOrderId($dump[$i]['id']);
-                    $table = Table::where(['id' => $dump[$i]['table_id']])->first();
+                    $orderItems = OrderItem::where(['order_id' => $dump[$i]['id']])->get();
+                    $table = StoreTable::where(['id' => $dump[$i]['table_id']])->first();
                     $customer = Customer::where(['id' => $dump[$i]['customer_id']])->first();
                     $address = Address::where(['id' => $dump[$i]['address_id']])->first();
                     $shipment = Shipment::where(['id' => $dump[$i]['shipment_id']])->first();
                     $payment = Payment::where(['id' => $dump[$i]['payment_id']])->first();
-                    $shop = Shop::where(['id' => $dump[$i]['shop_id']])->first();
+                    $store = Store::where(['id' => $dump[$i]['store_id']])->first();
 
                     $payload = [
                         'order' => $order,
-                        'details' => $orderItems,
+                        'orderItems' => $orderItems,
                         'table' => $table,
                         'customer' => $customer,
                         'address' => $address,
                         'shipment' => $shipment,
                         'payment' => $payment,
-                        'shop' => $shop
-                    ];
-
-                    array_push($newPayload, $payload);
-                }
-
-                $response = [
-                    'message' => 'proceed success',
-                    'status' => 'ok',
-                    'code' => '201',
-                    'data' => $newPayload
-                ];
-            } 
-            else 
-            {
-                $response = [
-                    'message' => 'failed to get datas',
-                    'status' => 'failed',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-        }
-
-        return response()->json($response, 200);
-    }
-
-    public function getByStatus(Request $req)
-    {
-        $validator = Validator::make($req->all(), [
-            'limit' => 'required|integer',
-            'offset' => 'required|integer',
-            'status' => 'required|string',
-            'user_id' => 'integer',
-            'owner_id' => 'integer'
-        ]);
-
-        $response = [];
-
-        if ($validator->fails()) 
-        {
-            $response = [
-                'message' => $validator->errors(),
-                'status' => 'invalide',
-                'code' => '201',
-                'data' => []
-            ];
-        } 
-        else 
-        {
-            $shID = $req['shop_id'];
-            $oID = $req['owner_id'];
-            $uID = $req['user_id'];
-            $limit = $req['limit'];
-            $offset = $req['offset'];
-            if ($uID) {
-                $data = Order::where(['created_by' => $uID, 'status' => $req['status']])
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            } else if ($shID) {
-                $data = Order::where(['status' => $req['status']])
-                        ->where(['shop_id' => $shID])
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            } else if ($oID) {
-                $data = Order::where(['status' => $req['status']])
-                        ->where(['customer_id' => $oID])
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            } else {
-                $data = [];
-            }
-            
-            if ($data) 
-            {
-                $newPayload = array();
-
-                $limit = $req['limit'];
-                $offset = $req['offset'];
-
-                $dump = json_decode($data, true);
-
-                for ($i=0; $i < count($dump); $i++) { 
-                    $order = $dump[$i];
-                    $orderItems = OrderItem::GetByOrderId($dump[$i]['id']); //OrderItem::where(['order_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
-                    $table = Table::where(['id' => $dump[$i]['table_id']])->first();
-                    $customer = Customer::where(['id' => $dump[$i]['customer_id']])->first();
-                    $address = Address::where(['id' => $dump[$i]['address_id']])->first();
-                    $shipment = Shipment::where(['id' => $dump[$i]['shipment_id']])->first();
-                    $payment = Payment::where(['id' => $dump[$i]['payment_id']])->first();
-                    $shop = Shop::where(['id' => $dump[$i]['shop_id']])->first();
-
-                    $payload = [
-                        'order' => $order,
-                        'details' => $orderItems,
-                        'table' => $table,
-                        'customer' => $customer,
-                        'address' => $address,
-                        'shipment' => $shipment,
-                        'payment' => $payment,
-                        'shop' => $shop
-                    ];
-
-                    array_push($newPayload, $payload);
-                }
-
-                $response = [
-                    'message' => 'proceed success',
-                    'status' => 'ok',
-                    'code' => '201',
-                    'data' => $newPayload
-                ];
-            } 
-            else 
-            {
-                $response = [
-                    'message' => 'failed to get datas',
-                    'status' => 'failed',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-        }
-
-        return response()->json($response, 200);
-    }
-
-    public function getByTableID(Request $req)
-    {
-        $validator = Validator::make($req->all(), [
-            'limit' => 'required|integer',
-            'offset' => 'required|integer',
-            'owner_id' => 'integer'
-        ]);
-
-        $response = [];
-
-        if ($validator->fails()) 
-        {
-            $response = [
-                'message' => $validator->errors(),
-                'status' => 'invalide',
-                'code' => '201',
-                'data' => []
-            ];
-        } 
-        else 
-        {
-            $oID = $req['owner_id'];
-            $limit = $req['limit'];
-            $offset = $req['offset'];
-
-            if ($oID) {
-                $data = Order::where('status', '!=', 'canceled')
-                        ->where('status', '!=', 'done')
-                        ->where(['table_id' => $oID])
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            } else {
-                $data = Order::where('status', '!=', 'canceled')
-                        ->where('status', '!=', 'done')
-                        ->limit($limit)
-                        ->offset($offset)
-                        ->orderBy('id', 'desc')
-                        ->get();
-            }
-            
-            if ($data) 
-            {
-                $newPayload = array();
-
-                $limit = $req['limit'];
-                $offset = $req['offset'];
-
-                $dump = json_decode($data, true);
-
-                for ($i=0; $i < count($dump); $i++) { 
-                    $order = $dump[$i];
-                    $orderItems = OrderItem::GetByOrderId($dump[$i]['id']); //OrderItem::where(['order_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
-                    $table = Table::where(['id' => $dump[$i]['table_id']])->first();
-                    $customer = Customer::where(['id' => $dump[$i]['customer_id']])->first();
-                    $address = Address::where(['id' => $dump[$i]['address_id']])->first();
-                    $shipment = Shipment::where(['id' => $dump[$i]['shipment_id']])->first();
-                    $payment = Payment::where(['id' => $dump[$i]['payment_id']])->first();
-                    $shop = Shop::where(['id' => $dump[$i]['shop_id']])->first();
-
-                    $payload = [
-                        'order' => $order,
-                        'details' => $orderItems,
-                        'table' => $table,
-                        'customer' => $customer,
-                        'address' => $address,
-                        'shipment' => $shipment,
-                        'payment' => $payment,
-                        'shop' => $shop
+                        'store' => $store
                     ];
 
                     array_push($newPayload, $payload);
@@ -418,23 +192,23 @@ class OrderController extends Controller
                 $dump = json_decode($data, true);
 
                 $order = $dump;
-                $orderItems = OrderItem::GetByOrderId($dump['id']); //OrderItem::where(['order_id' => $dump['id']])->orderBy('id', 'desc')->get();
-                $table = Table::where(['id' => $dump['table_id']])->first();
+                $orderItems = OrderItem::where(['order_id' => $dump['id']])->get();
+                $table = StoreTable::where(['id' => $dump['table_id']])->first();
                 $customer = Customer::where(['id' => $dump['customer_id']])->first();
                 $address = Address::where(['id' => $dump['address_id']])->first();
                 $shipment = Shipment::where(['id' => $dump['shipment_id']])->first();
                 $payment = Payment::where(['id' => $dump['payment_id']])->first();
-                $shop = Shop::where(['id' => $dump['shop_id']])->first();
+                $store = Store::where(['id' => $dump['store_id']])->first();
 
                 $payload = [
                     'order' => $order,
-                    'details' => $orderItems,
+                    'orderItems' => $orderItems,
                     'table' => $table,
                     'customer' => $customer,
                     'address' => $address,
                     'shipment' => $shipment,
                     'payment' => $payment,
-                    'shop' => $shop
+                    'store' => $store
                 ];
 
                 $response = [
@@ -457,7 +231,9 @@ class OrderController extends Controller
 
         return response()->json($response, 200);
     }
+    // END GET DATA
 
+    // START COUNTING
     public function getCountByID(Request $req)
     {
         $response = [];
@@ -487,19 +263,17 @@ class OrderController extends Controller
         return response()->json($response, 200);
     }
 
-    public function getCountByStatus(Request $req)
+    public function getCountByStoreID(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'shop_id' => 'required|integer'
+            'store_id' => 'required|integer'
         ]);
 
         $response = [];
 
-        $id = Auth()->user()->id;
-        $shID = $req['shop_id'];
+        $shID = $req['store_id'];
         $data = [
-            'all' => Order::GetCountByID($id),
-            'allAdmin' => Order::GetCountByShopID($shID),
+            'all' => Order::GetCountByShopID($shID),
             'unconfirmed' => Order::GetCountByShopStatusID($shID, 'unconfirmed'),
             'confirmed' => Order::GetCountByShopStatusID($shID, 'confirmed'),
             'cooking' => Order::GetCountByShopStatusID($shID, 'cooking'),
@@ -553,7 +327,6 @@ class OrderController extends Controller
             $id = $req['owner_id'];
             $data = [
                 'all' => Order::GetCountCustomerByID($id),
-                'allAdmin' => Order::GetCountCustomerAll($id),
                 'unconfirmed' => Order::GetCountCustomerByStatusID($id, 'unconfirmed'),
                 'confirmed' => Order::GetCountCustomerByStatusID($id, 'confirmed'),
                 'cooking' => Order::GetCountCustomerByStatusID($id, 'cooking'),
@@ -585,12 +358,93 @@ class OrderController extends Controller
 
         return response()->json($response, 200);
     }
+    // END COUNTING
+
+    public function post(Request $req)
+    {
+        $validator = Validator::make($req->all(), [
+            'order_id' => 'required|string|min:0|max:17|unique:orders',
+            'delivery_price' => 'required|integer|min:0',
+            'total_price' => 'required|integer|min:0',
+            'total_item' => 'required|integer|min:0',
+            'bills_price' => 'required|integer|min:0',
+            'change_price' => 'required|integer|min:0',
+            'payment_status' => 'required|boolean',
+            'status' => 'required|string',
+            'type' => 'required|string',
+            'note' => 'max:255',
+        ]);
+
+        $response = [];
+
+        if ($validator->fails()) 
+        {
+            $response = [
+                'message' => $validator->errors(),
+                'status' => 'invalide',
+                'code' => '201',
+                'data' => []
+            ];
+        } 
+        else 
+        {
+            $payload = [
+                'order_id' => $req['order_id'],
+                'delivery_price' => $req['delivery_price'],
+                'total_price' => $req['total_price'],
+                'total_item' => $req['total_item'],
+                'bills_price' => $req['bills_price'],
+                'change_price' => $req['change_price'],
+                'payment_status' => $req['payment_status'],
+                'store_name' => $req['store_name'],
+                'table_name' => $req['table_name'],
+                'customer_name' => $req['customer_name'],
+                'payment_name' => $req['payment_name'],
+                'shipment_name' => $req['shipment_name'],
+                'proof_of_payment' => $req['proof_of_payment'],
+                'status' => $req['status'],
+                'type' => $req['type'],
+                'note' => $req['note'],
+                'store_id' => $req['store_id'],
+                'table_id' => $req['table_id'],
+                'customer_id' => $req['customer_id'],
+                'address_id' => $req['address_id'],
+                'shipment_id' => $req['shipment_id'],
+                'payment_id' => $req['payment_id'],
+                'created_by' => Auth()->user()->id,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $data = Order::insert($payload);
+
+            if ($data)
+            {
+                $response = [
+                    'message' => 'proceed success',
+                    'status' => 'ok',
+                    'code' => '201',
+                    'data' => Order::where(['order_id' => $req['order_id']])->first()
+                ];
+            }
+            else 
+            {
+                $response = [
+                    'message' => 'failed to save',
+                    'status' => 'failed',
+                    'code' => '201',
+                    'data' => []
+                ];
+            }
+        }
+
+        return response()->json($response, 200);
+    }
 
     public function postAdmin(Request $req)
     {
         $validator = Validator::make($req->all(), [
             'order' => 'required',
-            'details' => 'required'
+            'orderItems' => 'required'
         ]);
 
         $response = [];
@@ -617,11 +471,11 @@ class OrderController extends Controller
                 $payloadTable = $dataOrder->table_id;
 
                 if ($payloadTable) {
-                    Table::where(['id' => $payloadTable])->update(['status' => 'inactive']);
+                    StoreTable::where(['id' => $payloadTable])->update(['status' => 'inactive']);
                 }
 
                 $newPayloadItems = [];
-                $payloadItems = $req['details'];
+                $payloadItems = $req['orderItems'];
 
                 $dump = $payloadItems;
 
@@ -637,11 +491,11 @@ class OrderController extends Controller
                     $dataItem = OrderItem::where(['order_id' => $dataOrder['id']])->get();
 
                     $req['order'] = $dataOrder;
-                    $req['details'] = $dataItem;
+                    $req['orderItems'] = $dataItem;
                     
                     $payloadResponse = [
                         'order' => $req['order'],
-                        'details' => $req['details'],
+                        'orderItems' => $req['orderItems'],
                         'customer' => $req['customer'],
                         'address' => $req['address'],
                         'shipment' => $req['shipment'],
@@ -684,7 +538,7 @@ class OrderController extends Controller
     {
         $validator = Validator::make($req->all(), [
             'order' => 'required',
-            'details' => 'required',
+            'orderItems' => 'required',
         ]);
 
         $response = [];
@@ -710,11 +564,11 @@ class OrderController extends Controller
                 $payloadTable = $dataOrder->table_id;
 
                 if ($payloadTable) {
-                    Table::where(['id' => $payloadTable])->update(['status' => 'inactive']);
+                    StoreTable::where(['id' => $payloadTable])->update(['status' => 'inactive']);
                 }
 
                 $newPayloadItems = [];
-                $payloadItems = $req['details'];
+                $payloadItems = $req['orderItems'];
 
                 $dump = $payloadItems;
 
@@ -735,11 +589,11 @@ class OrderController extends Controller
                     $dataItem = OrderItem::where(['order_id' => $dataOrder['id']])->get();
 
                     $req['order'] = $dataOrder;
-                    $req['details'] = $dataItem;
+                    $req['orderItems'] = $dataItem;
                     
                     $payloadResponse = [
                         'order' => $req['order'],
-                        'details' => $req['details'],
+                        'orderItems' => $req['orderItems'],
                         'customer' => $req['customer'],
                         'address' => $req['address'],
                         'shipment' => $req['shipment'],
@@ -768,84 +622,6 @@ class OrderController extends Controller
             {
                 $response = [
                     'message' => 'failed to save order',
-                    'status' => 'failed',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-        }
-
-        return response()->json($response, 200);
-    }
-
-    public function post(Request $req)
-    {
-        $validator = Validator::make($req->all(), [
-            'order_id' => 'required|string|min:0|max:17|unique:orders',
-            'delivery_fee' => 'integer|min:0',
-            'total_price' => 'integer|min:0',
-            'total_item' => 'integer|min:0',
-            'payment_status' => 'required|boolean',
-            'status' => 'required|string',
-            'type' => 'required|string',
-            'note' => 'max:255',
-        ]);
-
-        $response = [];
-
-        if ($validator->fails()) 
-        {
-            $response = [
-                'message' => $validator->errors(),
-                'status' => 'invalide',
-                'code' => '201',
-                'data' => []
-            ];
-        } 
-        else 
-        {
-            $payload = [
-                'order_id' => $req['order_id'],
-                'delivery_fee' => $req['delivery_fee'],
-                'total_price' => $req['total_price'],
-                'total_item' => $req['total_item'],
-                'bills_price' => $req['bills_price'],
-                'change_price' => $req['change_price'],
-                'payment_status' => $req['payment_status'],
-                'shop_name' => $req['shop_name'],
-                'table_name' => $req['table_name'],
-                'customer_name' => $req['customer_name'],
-                'payment_name' => $req['payment_name'],
-                'shipment_name' => $req['shipment_name'],
-                'proof_of_payment' => $req['proof_of_payment'],
-                'status' => $req['status'],
-                'type' => $req['type'],
-                'note' => $req['note'],
-                'shop_id' => $req['shop_id'],
-                'table_id' => $req['table_id'],
-                'customer_id' => $req['customer_id'],
-                'address_id' => $req['address_id'],
-                'shipment_id' => $req['shipment_id'],
-                'payment_id' => $req['payment_id'],
-                'created_by' => Auth()->user()->id,
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            $data = Order::insert($payload);
-
-            if ($data)
-            {
-                $response = [
-                    'message' => 'proceed success',
-                    'status' => 'ok',
-                    'code' => '201',
-                    'data' => Order::where(['order_id' => $req['order_id']])->first()
-                ];
-            }
-            else 
-            {
-                $response = [
-                    'message' => 'failed to save',
                     'status' => 'failed',
                     'code' => '201',
                     'data' => []
@@ -956,9 +732,11 @@ class OrderController extends Controller
     {
         $validator = Validator::make($req->all(), [
             'order_id' => 'required|string|min:0|max:17',
-            'delivery_fee' => 'integer|min:0',
-            'total_price' => 'integer|min:0',
-            'total_item' => 'integer|min:0',
+            'delivery_price' => 'required|integer|min:0',
+            'total_price' => 'required|integer|min:0',
+            'total_item' => 'required|integer|min:0',
+            'bills_price' => 'required|integer|min:0',
+            'change_price' => 'required|integer|min:0',
             'payment_status' => 'required|boolean',
             'status' => 'required|string',
             'type' => 'required|string',
@@ -979,13 +757,13 @@ class OrderController extends Controller
         else 
         {
             $payload = [
-                'delivery_fee' => $req['delivery_fee'],
+                'delivery_price' => $req['delivery_price'],
                 'total_price' => $req['total_price'],
                 'total_item' => $req['total_item'],
                 'bills_price' => $req['bills_price'],
                 'change_price' => $req['change_price'],
                 'payment_status' => $req['payment_status'],
-                'shop_name' => $req['shop_name'],
+                'store_name' => $req['store_name'],
                 'table_name' => $req['table_name'],
                 'customer_name' => $req['customer_name'],
                 'payment_name' => $req['payment_name'],
@@ -994,7 +772,7 @@ class OrderController extends Controller
                 'status' => $req['status'],
                 'type' => $req['type'],
                 'note' => $req['note'],
-                'shop_id' => $req['shop_id'],
+                'store_id' => $req['store_id'],
                 'table_id' => $req['table_id'],
                 'customer_id' => $req['customer_id'],
                 'address_id' => $req['address_id'],

@@ -230,6 +230,34 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('post', 'EmployeeShiftController@post');
         Route::delete('delete', 'EmployeeShiftController@delete');
     });
+
+    // order
+    Route::prefix('order')->group(function () {
+        Route::get('getDashboard', 'OrderController@getDashboard');
+        Route::get('getAll', 'OrderController@getAll');
+        Route::get('getByID', 'OrderController@getByID');
+        Route::get('getCountByID', 'OrderController@getCountByID');
+        Route::get('getCountByStoreID', 'OrderController@getCountByStoreID');
+        Route::get('getCountCustomerByID', 'OrderController@getCountCustomerByID');
+        Route::post('post', 'OrderController@post');
+        Route::post('postOrderStatus', 'OrderController@postOrderStatus');
+        Route::post('postOrderPaymentStatus', 'OrderController@postOrderPaymentStatus');
+        Route::post('postCustomer', 'OrderController@postCustomer');
+        Route::post('postAdmin', 'OrderController@postAdmin');
+        Route::put('update', 'OrderController@update');
+        Route::delete('delete', 'OrderController@delete');
+    });
+
+    // orderItem
+    Route::prefix('orderItem')->group(function () {
+        Route::get('getAll', 'OrderItemController@getAll');
+        Route::get('getByID', 'OrderItemController@getByID');
+        Route::get('getAllByStoreID', 'OrderItemController@getAllByStoreID');
+        Route::get('getAllByEmployeeID', 'OrderItemController@getAllByEmployeeID');
+        Route::post('post', 'OrderItemController@post');
+        Route::put('update', 'OrderItemController@update');
+        Route::delete('delete', 'OrderItemController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {

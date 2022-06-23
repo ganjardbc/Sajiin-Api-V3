@@ -40,13 +40,6 @@ class CreateOrdersTable extends Migration
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
-
-            // $table->foreign('config_id')->references('id')->on('partner_configurations');
-            // $table->foreign('table_id')->references('id')->on('tables');
-            // $table->foreign('customer_id')->references('id')->on('customers');
-            // $table->foreign('address_id')->references('id')->on('addresses');
-            // $table->foreign('shipment_id')->references('id')->on('shipments');
-            // $table->foreign('payment_id')->references('id')->on('payments');
         });
     }
 

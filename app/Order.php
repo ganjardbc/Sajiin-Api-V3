@@ -98,7 +98,7 @@ class Order extends Model
         ->select(
             'orders.id'
         )
-        ->where('orders.shop_id', '=', $id)
+        ->where('orders.store_id', '=', $id)
         ->where('orders.status', '!=', 'canceled')
         ->where('orders.status', '!=', 'done')
         ->count();
@@ -110,7 +110,7 @@ class Order extends Model
         ->select(
             'orders.id'
         )
-        ->where(['orders.shop_id' => $id, 'orders.status' => $status])
+        ->where(['orders.store_id' => $id, 'orders.status' => $status])
         ->count();
     }
 
