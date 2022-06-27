@@ -258,6 +258,45 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('update', 'OrderItemController@update');
         Route::delete('delete', 'OrderItemController@delete');
     });
+
+    // customers
+    Route::prefix('customer')->group(function () {
+        Route::get('getAll', 'CustomerController@getAll');
+        Route::get('getByID', 'CustomerController@getByID');
+        Route::post('uploadImage', 'CustomerController@uploadImage');
+        Route::post('removeImage', 'CustomerController@removeImage');
+        Route::post('post', 'CustomerController@post');
+        Route::put('update', 'CustomerController@update');
+        Route::delete('delete', 'CustomerController@delete');
+    });
+
+    // address
+    Route::prefix('address')->group(function () {
+        Route::get('getAll', 'AddressController@getAll');
+        Route::get('getByID', 'AddressController@getByID');
+        Route::post('post', 'AddressController@post');
+        Route::put('update', 'AddressController@update');
+        Route::delete('delete', 'AddressController@delete');
+    });
+
+    // wish lists
+    Route::prefix('wishlist')->group(function () {
+        Route::get('getAll', 'WishListController@getAll');
+        Route::post('checkWishList', 'WishListController@checkWishList');
+        Route::post('post', 'WishListController@post');
+        Route::put('update', 'WishListController@update');
+        Route::delete('delete', 'WishListController@delete');
+    });
+
+    // cart
+    Route::prefix('cart')->group(function () {
+        Route::get('getAll', 'CartController@getAll');
+        Route::get('getByID', 'CartController@getByID');
+        Route::get('getCountByID', 'CartController@getCountByID');
+        Route::post('post', 'CartController@post');
+        Route::put('update', 'CartController@update');
+        Route::delete('delete', 'CartController@delete');
+    });
 });
 
 Route::prefix('auth')->group(function () {

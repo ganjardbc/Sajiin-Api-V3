@@ -27,6 +27,7 @@ class CreateCartsTable extends Migration
             $table->string('status')->nullable();
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

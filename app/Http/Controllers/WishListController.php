@@ -4,16 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\WisheList;
+use App\WishList;
+use App\Customer;
+use App\Store;
+use App\StoreProduct;
 use App\Product;
-use App\ProductDetail;
 use App\ProductImage;
 use App\Category;
-use App\ProductToping;
-use App\Customer;
-use App\Table;
 
-class WisheListController extends Controller
+class WishListController extends Controller
 {
     public function __construct()
     {
@@ -25,8 +24,7 @@ class WisheListController extends Controller
         $validator = Validator::make($req->all(), [
             'limit' => 'required|integer',
             'offset' => 'required|integer',
-            'user_id' => 'integer',
-            'owner_id' => 'integer'
+            'customer_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -42,22 +40,14 @@ class WisheListController extends Controller
         } 
         else 
         {
-            $oID = $req['owner_id'];
-            $uID = $req['user_id'];
-            $status = $req['status'];
             $limit = $req['limit'];
             $offset = $req['offset'];
+            $data = WishList::where('customer_id', $req['customer_id'])
+                ->limit($limit)
+                ->offset($offset)
+                ->orderBy('id', 'desc')
+                ->get();
 
-            if ($uID) {
-                $data = WisheList::GetAllByID($limit, $offset, $uID);
-            } else {
-                if ($oID) {
-                    $data = WisheList::GetAllByOwnerID($limit, $offset, $oID);
-                } else {
-                    $data = WisheList::GetAll($limit, $offset);
-                }
-            }
-            
             if ($data) 
             {
                 $newPayload = array();
@@ -65,22 +55,18 @@ class WisheListController extends Controller
                 $dump = json_decode($data, true);
 
                 for ($i=0; $i < count($dump); $i++) { 
-                    $product = $dump[$i];
-                    $stt = $status ? ['status' => $status] : [];
-                    $detailProduct = ProductDetail::where(array_merge(['product_id' => $dump[$i]['prod_id']], $stt))->orderBy('id', 'desc')->get();
-                    $detailImage = ProductImage::where(['product_id' => $dump[$i]['prod_id']])->orderBy('id', 'desc')->get();
-                    $detailToping = ProductToping::GetAll(1000, 0, $dump[$i]['prod_id'], $stt);
-                    $detailCustomer= Customer::where(['id' => $dump[$i]['owner_id']])->first();
-                    $detailTable= Table::where(['id' => $dump[$i]['owner_id']])->first();
-                    $categories = Category::get();
+                    $wishList = $dump[$i];
+                    $customer = Customer::where('id', $wishList['customer_id'])->first();
+                    $storeProduct = StoreProduct::where('id', $wishList['store_product_id'])->first();
+                    $product = Product::where(['id' => $storeProduct['product_id']])->first();
+                    $product['product_image'] = ProductImage::where(['product_id' => $product['id']])->get();
+                    $storeProduct['product'] = $product;
+                    $storeProduct['store'] = Store::where(['id' => $storeProduct['store_id']])->first();
+                    $storeProduct['category'] = Category::where(['id' => $storeProduct['category_id']])->first();
                     $payload = [
-                        'product' => $product,
-                        'details' => $detailProduct,
-                        'images' => $detailImage,
-                        'topings' => $detailToping,
-                        'categories' => $categories,
-                        'customer' => $detailCustomer,
-                        'table' => $detailTable
+                        'wishList' => $wishList,
+                        'customer' => $customer,
+                        'storeProduct' => $storeProduct
                     ];
                     array_push($newPayload, $payload);
                 }
@@ -106,11 +92,11 @@ class WisheListController extends Controller
         return response()->json($response, 200);
     }
 
-    public function checkWisheList(Request $req)
+    public function checkWishList(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'user_id' => 'required|integer',
-            'product_id' => 'required|integer'
+            'customer_id' => 'required|integer',
+            'store_product_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -127,12 +113,11 @@ class WisheListController extends Controller
         else 
         {
             $payload = [
-                'owner_id' => $req['owner_id'],
-                'user_id' => $req['user_id'], 
-                'product_id' => $req['product_id']
+                'customer_id' => $req['customer_id'], 
+                'store_product_id' => $req['store_product_id']
             ];
 
-            $check = WisheList::where($payload)->first();
+            $check = WishList::where($payload)->first();
 
             if ($check) {
                 $response = [
@@ -157,8 +142,8 @@ class WisheListController extends Controller
     public function post(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'user_id' => 'required|integer',
-            'product_id' => 'required|integer'
+            'customer_id' => 'required|integer',
+            'store_product_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -175,16 +160,15 @@ class WisheListController extends Controller
         else 
         {
             $payload = [
-                'owner_id' => $req['owner_id'],
-                'user_id' => Auth()->user()->id,
-                'product_id' => $req['product_id'],
+                'customer_id' => Auth()->user()->id,
+                'store_product_id' => $req['store_product_id'],
                 'created_by' => Auth()->user()->id,
                 'updated_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 
-            $check = WisheList::where(['owner_id' => $req['owner_id'], 'user_id' => $req['user_id'], 'product_id' => $req['product_id']])->first();
+            $check = WishList::where(['customer_id' => $req['customer_id'], 'store_product_id' => $req['store_product_id']])->first();
 
             if ($check) {
                 $response = [
@@ -194,7 +178,7 @@ class WisheListController extends Controller
                     'data' => []
                 ];
             } else {
-                $data = WisheList::insert($payload);
+                $data = WishList::insert($payload);
 
                 if ($data)
                 {
@@ -224,8 +208,8 @@ class WisheListController extends Controller
     public function delete(Request $req)
     {
         $validator = Validator::make($req->all(), [
-            'user_id' => 'required|integer',
-            'product_id' => 'required|integer'
+            'customer_id' => 'required|integer',
+            'store_product_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -241,7 +225,7 @@ class WisheListController extends Controller
         } 
         else 
         {
-            $data = WisheList::where(['owner_id' => $req['owner_id'], 'user_id' => $req['user_id'], 'product_id' => $req['product_id']])->delete();
+            $data = WishList::where(['customer_id' => $req['customer_id'], 'store_product_id' => $req['store_product_id']])->delete();
 
             if ($data)
             {

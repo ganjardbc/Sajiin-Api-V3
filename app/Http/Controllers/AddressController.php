@@ -19,7 +19,7 @@ class AddressController extends Controller
         $validator = Validator::make($req->all(), [
             'limit' => 'required|integer',
             'offset' => 'required|integer',
-            'customer_id' => 'required|string'
+            'customer_id' => 'required|integer'
         ]);
 
         $response = [];
@@ -39,15 +39,32 @@ class AddressController extends Controller
             $limit = $req['limit'];
             $offset = $req['offset'];
 
-            $data = Address::GetAllByID($customer_id, $limit, $offset);
+            $data = Address::where('customer_id', $customer_id)
+                ->limit($limit)
+                ->offset($offset)
+                ->orderBy('id', 'desc')
+                ->get();
             
             if ($data) 
             {
+                $newPayload = array();
+                $dump = json_decode($data, true);
+
+                for ($i=0; $i < count($dump); $i++) { 
+                    $address = $dump[$i];
+                    $customer = Customer::where('id', $dump[$i]['customer_id'])->first();
+                    $payload = [
+                        'address' => $address,
+                        'customer' => $customer
+                    ];
+                    array_push($newPayload, $payload);
+                }
+
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $data
+                    'data' => $newPayload
                 ];
             } 
             else 
@@ -84,15 +101,20 @@ class AddressController extends Controller
         else 
         {
             $address_id = $req['address_id'];
-            $data = Address::GetAllByAddressID($address_id);
+            $data = Address::where('address_id', $address_id)->first();
             
             if ($data) 
             {
+                $customer = Customer::where('id', $data->customer_id)->first();
+                $payload = [
+                    'address' => $data,
+                    'customer' => $customer
+                ];
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $data
+                    'data' => $payload
                 ];
             } 
             else 
@@ -117,7 +139,7 @@ class AddressController extends Controller
             'address' => 'required|string|max:255',
             'customer_id' => 'required|integer',
             'is_selected' => 'required|boolean',
-            'type' => 'string'
+            'type' => 'required|string'
         ]);
 
         $response = [];
@@ -176,7 +198,7 @@ class AddressController extends Controller
             'name' => 'required|string',
             'address' => 'required|string|max:255',
             'is_selected' => 'required|boolean',
-            'type' => 'string'
+            'type' => 'required|string'
         ]);
 
         $response = [];

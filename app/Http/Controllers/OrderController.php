@@ -826,16 +826,27 @@ class OrderController extends Controller
         } 
         else 
         {
-            $orderData = Order::where(['order_id' => $req['order_id']])->first();
-            OrderItem::where(['order_id' => $orderData['id']])->delete();
-            Order::where(['order_id' => $orderData['order_id']])->delete();
-
-            $response = [
-                'message' => 'proceed success',
-                'status' => 'ok',
-                'code' => '201',
-                'data' => []
-            ];
+            $data = Order::where(['order_id' => $req['order_id']])->first();
+            if ($data)
+            {
+                OrderItem::where(['order_id' => $data['id']])->delete();
+                Order::where(['order_id' => $data['order_id']])->delete();
+                $response = [
+                    'message' => 'proceed success',
+                    'status' => 'ok',
+                    'code' => '201',
+                    'data' => []
+                ];
+            }
+            else 
+            {
+                $response = [
+                    'message' => 'failed to delete',
+                    'status' => 'failed',
+                    'code' => '201',
+                    'data' => []
+                ];
+            }
         }
 
         return response()->json($response, 200);

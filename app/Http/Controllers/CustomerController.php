@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Customer;
 use App\Address;
-use App\Shop;
+use App\Cart;
+use App\WishList;
 use Image;
 
 class CustomerController extends Controller
@@ -38,40 +39,27 @@ class CustomerController extends Controller
         else 
         {
             $status = $req['status'];
-            $uID = $req['user_id'];
-            $shID = $req['shop_id'];
             $limit = $req['limit'];
             $offset = $req['offset'];
-
             $stt = $status ? ['status' => $status] : [];
+            $data = Customer::where($stt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
 
-            if ($uID) {
-                $newStt = array_merge($stt, ['created_by' => $uID]);
-                $data = Customer::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            } else if ($shID) {
-                $newStt = array_merge($stt, ['shop_id' => $shID]);
-                $data = Customer::where($newStt)->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
-            } else {
-                $data = [];
-            }
-            
             if ($data) 
             {
                 $newPayload = array();
-
-                $limit = $req['limit'];
-                $offset = $req['offset'];
 
                 $dump = json_decode($data, true);
 
                 for ($i=0; $i < count($dump); $i++) { 
                     $customer = $dump[$i];
                     $address = Address::where(['customer_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
-                    $shop = Shop::where(['id' => $dump[$i]['shop_id']])->first();
+                    $wishList = WishList::where(['customer_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
+                    $cart = Cart::where(['customer_id' => $dump[$i]['id']])->orderBy('id', 'desc')->get();
                     $payload = [
                         'customer' => $customer,
                         'address' => $address,
-                        'shop' => $shop
+                        'wishList' => $wishList,
+                        'cart' => $cart
                     ];
                     array_push($newPayload, $payload);
                 }
@@ -120,55 +108,21 @@ class CustomerController extends Controller
             
             if ($data) 
             {
+                $address = Address::where(['customer_id' => $data->id])->orderBy('id', 'desc')->get();
+                $wishList = WishList::where(['customer_id' => $data->id])->orderBy('id', 'desc')->get();
+                $cart = Cart::where(['customer_id' => $data->id])->orderBy('id', 'desc')->get();
+                $payload = [
+                    'customer' => $data,
+                    'address' => $address,
+                    'wishList' => $wishList,
+                    'cart' => $cart
+                ];
+
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
                     'code' => '201',
-                    'data' => $data
-                ];
-            } 
-            else 
-            {
-                $response = [
-                    'message' => 'failed to get datas',
-                    'status' => 'failed',
-                    'code' => '201',
-                    'data' => []
-                ];
-            }
-        }
-
-        return response()->json($response, 200);
-    }
-
-    public function getSearchByEmail(Request $req)
-    {
-        $validator = Validator::make($req->all(), [
-            'email' => 'required|string',
-        ]);
-
-        $response = [];
-
-        if ($validator->fails()) 
-        {
-            $response = [
-                'message' => $validator->errors(),
-                'status' => 'invalide',
-                'code' => '201',
-                'data' => []
-            ];
-        } 
-        else 
-        {
-            $data = Customer::where(['email' => $req['email']])->first();
-            
-            if ($data) 
-            {
-                $response = [
-                    'message' => 'proceed success',
-                    'status' => 'ok',
-                    'code' => '201',
-                    'data' => $data
+                    'data' => $payload
                 ];
             } 
             else 
@@ -327,8 +281,7 @@ class CustomerController extends Controller
             'name' => 'required|string',
             'email' => 'required|string|email|max:255',
             'phone' => 'required|string|max:13',
-            'status' => 'string',
-            'shop_id' => 'required|integer'
+            'status' => 'required|string'
         ]);
 
         $response = [];
@@ -351,7 +304,6 @@ class CustomerController extends Controller
                 'phone' => $req['phone'],
                 'status' => $req['status'],
                 'about' => $req['about'],
-                'shop_id' => $req['shop_id'],
                 'created_by' => Auth()->user()->id,
                 'created_at' => date('Y-m-d H:i:s')
             ];
@@ -388,8 +340,7 @@ class CustomerController extends Controller
             'name' => 'required|string',
             'email' => 'required|string|email|max:255',
             'phone' => 'required|string|max:13',
-            'status' => 'string',
-            'shop_id' => 'required|integer'
+            'status' => 'string'
         ]);
 
         $response = [];
@@ -411,7 +362,6 @@ class CustomerController extends Controller
                 'phone' => $req['phone'],
                 'status' => $req['status'],
                 'about' => $req['about'],
-                'shop_id' => $req['shop_id'],
                 'updated_by' => Auth()->user()->id,
                 'updated_at' => date('Y-m-d H:i:s')
             ];
@@ -460,10 +410,15 @@ class CustomerController extends Controller
         } 
         else 
         {
-            $data = Customer::where(['customer_id' => $req['customer_id']])->delete();
+            $data = Customer::where(['customer_id' => $req['customer_id']])->first();
 
             if ($data)
             {
+                Address::where(['customer_id' => $data['id']])->delete();
+                Cart::where(['id' => $data['id']])->delete();
+                WishList::where(['id' => $data['id']])->delete();
+                Customer::where(['id' => $data['id']])->delete();
+
                 $response = [
                     'message' => 'proceed success',
                     'status' => 'ok',
